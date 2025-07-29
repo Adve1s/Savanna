@@ -9,7 +9,7 @@ namespace Savanna.Logic
     /// <summary>
     /// Represents animal position
     /// </summary>
-    internal class AnimalCoordinates
+    internal struct AnimalCoordinates
     {
         /// <summary>
         /// Get and change the animal of position

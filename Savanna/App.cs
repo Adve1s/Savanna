@@ -22,7 +22,9 @@ namespace Savanna
         /// </summary>
         public App()
         {
-            _savannaWorld = new World();
+            int height = Input.GetValidIntiger(UIConstants.HeightMessage);
+            int width = Input.GetValidIntiger(UIConstants.WidthMessage);
+            _savannaWorld = new World(height,width);
             _display = new Display();
         }
 
@@ -38,9 +40,8 @@ namespace Savanna
             {
                 if (Console.KeyAvailable)
                 {
-                    ConsoleKey key = Input.GetUserKey();
-                    if (key == ConsoleKey.A) AddAnimal(AnimalType.Antelope);
-                    if (key == ConsoleKey.L) AddAnimal(AnimalType.Lion);
+                    char key = Input.GetUserKeyAsUpperChar();
+                    _savannaWorld.AddAnimal(key);
                 }
                 if (stopwatch.ElapsedMilliseconds >= updateIntervalMs)
                 {
@@ -50,26 +51,5 @@ namespace Savanna
                 }
             }
         }
-
-        /// <summary>
-        /// Adds the animal of selected type to savanna world
-        /// </summary>
-        /// <param name="animal">Animal type to add</param>
-        private void AddAnimal(AnimalType animal)
-        {
-            var random = new Random();
-            int randomRow = random.Next(0, _savannaWorld.Height);
-            int randomColumn = random.Next(0, _savannaWorld.Width);
-            while (true)
-            {
-                if (_savannaWorld.AddAnimal(animal, randomRow, randomColumn))
-                {
-                    break;
-                }
-                randomRow = random.Next(0, _savannaWorld.Height);
-                randomColumn = random.Next(0, _savannaWorld.Width);
-            }
-        }
-
     }
 }

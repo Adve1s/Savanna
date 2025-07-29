@@ -81,33 +81,5 @@ namespace Savanna.Logic
             var allDirections = Enum.GetValues(typeof(Direction)).Cast<Direction>();
             return allDirections.Where(direction => IsDirectionValid(direction, surroundings, self)).ToList();
         }
-
-        /// <summary>
-        /// Gets list of best directions foe the animal based on enemy position
-        /// </summary>
-        /// <param name="directions">All allowed directions</param>
-        /// <param name="self">Own position</param>
-        /// <param name="enemy">enemy position</param>
-        /// <returns>List of all equally good directions.</returns>
-        public static List<Direction> GetBestDirections(List<Direction> directions, AnimalCoordinates self, AnimalCoordinates enemy)
-        {
-            var directionWithDistanceToEnemy = directions.Select(direction => new
-            {
-                direction = direction,
-                distance = World.DistanceToEnemyCalculator(
-                    new AnimalCoordinates(self.Animal, self.Row + Directions[direction].row, self.Column + Directions[direction].column), enemy)
-            }).ToList();
-
-            Double afterMoveDistance = 0;
-            if (self.Animal is Lion) afterMoveDistance = directionWithDistanceToEnemy.Min(value => value.distance);
-            else if (self.Animal is Antelope) afterMoveDistance = directionWithDistanceToEnemy.Max(value => value.distance);
-
-            var returnDirection = directionWithDistanceToEnemy
-                    .Where(value => value.distance == afterMoveDistance)
-                    .Select(value => value.direction)
-                    .ToList();
-
-            return returnDirection;
-        }
     }
 }

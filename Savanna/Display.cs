@@ -17,7 +17,7 @@ namespace Savanna
         /// Displays current state of field
         /// </summary>
         /// <param name="field">Field information array</param>
-        public void DisplayField(AnimalType[,] field)
+        public void DisplayField(string[,] field)
         {
             Console.Clear();
             string finalField = string.Empty;
@@ -25,20 +25,8 @@ namespace Savanna
             {
                 for (int j = 0; j < field.GetLength(1); j++)
                 {
-                    switch (field[i, j]) 
-                    {
-                        case AnimalType.Antelope:
-                            finalField += DisplayConstants.AntelopeField;
-                            break;
-                        case AnimalType.Lion:
-                            finalField += DisplayConstants.LionField;
-                            break;
-                        case AnimalType.Empty:
-                            finalField += DisplayConstants.EmptyField;
-                            break;
-                        default:
-                            break;
-                    }
+                    if (field[i, j] != null) finalField += field[i, j] + UIConstants.SpaceBetweenFields;
+                    else finalField += UIConstants.EmptyField + UIConstants.SpaceBetweenFields;
                 }
                 finalField += "\n";
             }

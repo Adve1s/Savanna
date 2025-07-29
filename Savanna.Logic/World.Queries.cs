@@ -24,7 +24,7 @@ namespace Savanna.Logic
             (int visibleAreaHeight, int visibleAreaWidth) = GetVisibleDimentions(row, column);
             var visibleArea = new Animal[visibleAreaHeight, visibleAreaWidth];
 
-            AnimalCoordinates globalCoordinates = GetGlobalStartCoordinates(animal, row, column);
+            AnimalCoordinates globalCoordinates = GetGlobalStartVisionAreaCoordinates(animal, row, column);
             int defaultGlobalX = globalCoordinates.Column;
             var returnCoordinates = new AnimalCoordinates(animal, default, default);
             for (int localY = 0; localY < visibleAreaHeight; localY++)
@@ -53,7 +53,7 @@ namespace Savanna.Logic
         /// <param name="row">Row from where calculate</param>
         /// <param name="column">Column from where calculate</param>
         /// <returns>Starting row and column from global array</returns>
-        private AnimalCoordinates GetGlobalStartCoordinates(Animal animal, int row, int column)
+        private AnimalCoordinates GetGlobalStartVisionAreaCoordinates(Animal animal, int row, int column)
         {
             int globalRow;
             int globalColumn;
@@ -87,11 +87,11 @@ namespace Savanna.Logic
         }
 
         /// <summary>
-        /// Creates a list of visible lion coordinates
+        /// Creates a list of visible animals of selected type
         /// </summary>
         /// <param name="surroundings">Visible area</param>
-        /// <returns></returns>
-        internal static List<AnimalCoordinates> GetEnemyPositionsList<T>(Animal[,] surroundings)
+        /// <returns>List of Animal coordinates</returns>
+        internal static List<AnimalCoordinates> GetTypePositionsList<T>(Animal[,] surroundings)
         {
             var rivalCoordinates = new List<AnimalCoordinates>();
             for (int i = 0; i < surroundings.GetLength(0); i++)
@@ -105,14 +105,14 @@ namespace Savanna.Logic
         }
 
         /// <summary>
-        /// Calculates distance to enemy
+        /// Calculates distance from one field to other
         /// </summary>
-        /// <param name="self">Own coordinates</param>
-        /// <param name="enemy">Enemy Coordinates</param>
-        /// <returns>Number of moves to enemy</returns>
-        internal static double DistanceToEnemyCalculator(AnimalCoordinates self, AnimalCoordinates enemy)
+        /// <param name="from">From coordinates</param>
+        /// <param name="to">To Coordinates</param>
+        /// <returns>Number of moves between fields</returns>
+        internal static double DistanceToCalculator(AnimalCoordinates from, AnimalCoordinates to)
         {
-            return Math.Max(Math.Abs(self.Row-enemy.Row), Math.Abs(self.Column - enemy.Column));
+            return Math.Max(Math.Abs(from.Row-to.Row), Math.Abs(from.Column - to.Column));
         }
 
     }
