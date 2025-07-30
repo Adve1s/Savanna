@@ -21,10 +21,13 @@ namespace Savanna.Logic
         private const int LION_DEFAULT_SPEED = 2;
         private const int LION_DEFAULT_VISION = 5;
         private const int LION_DEFAULT_MAX_STAMINA = 100;
+        private const double LION_DEFAULT_MAX_HEALTH = 200;
         private const int LION_STAMINA_ADDITION = 25;
-        private const Double REST_RECOVERY_PRECENTAGE = 0.1;
-        private const Double SLEEP_RECOVERY_PRECENTAGE = 0.5;
-        private const Double ROAR_SPENDING_PRECENTAGE = 0.1;
+        private const double LION_HEALTH_DEDUCTION = 0.5;
+
+        private const double REST_RECOVERY_PRECENTAGE = 0.1;
+        private const double SLEEP_RECOVERY_PRECENTAGE = 0.5;
+        private const double ROAR_SPENDING_PRECENTAGE = 0.1;
         private const int REST_POSIBILITY_WEIGHT = 20;
         private const int SLEEP_POSIBILITY_WEIGHT = 10;
         private const int MOVE_POSIBILITY_WEIGHT = 60;
@@ -38,9 +41,11 @@ namespace Savanna.Logic
         protected override int DefaultSpeed => LION_DEFAULT_SPEED;
         protected override int DefaultVision => LION_DEFAULT_VISION;
         protected override int DefaultMaxStamina => LION_DEFAULT_MAX_STAMINA;
+        protected override double DefaultMaxHealth => LION_DEFAULT_MAX_HEALTH;
         protected override int StaminaAddition => LION_STAMINA_ADDITION;
-        protected override (int StaminaChange, int Weight) RestInfo => ((int)(Stamina * REST_RECOVERY_PRECENTAGE), REST_POSIBILITY_WEIGHT);
-        protected override (int StaminaChange, int Weight) SleepInfo => ((int)(Stamina * SLEEP_RECOVERY_PRECENTAGE), SLEEP_POSIBILITY_WEIGHT);
+        protected override double HealthDeduction => LION_HEALTH_DEDUCTION;
+        protected override (int StaminaChange, int Weight) RestInfo => ((int)(MaxStamina * REST_RECOVERY_PRECENTAGE), REST_POSIBILITY_WEIGHT);
+        protected override (int StaminaChange, int Weight) SleepInfo => ((int)(MaxStamina * SLEEP_RECOVERY_PRECENTAGE), SLEEP_POSIBILITY_WEIGHT);
         protected override (int StaminaChange, int Weight) MoveInfo => (-DefaultMaxStamina / Speed, MOVE_POSIBILITY_WEIGHT);
         protected (int StaminaChange, int Weight) RoarInfo => ((int)(-DefaultMaxStamina * ROAR_SPENDING_PRECENTAGE), ROAR_POSIBILITY_WEIGHT);
 
@@ -49,9 +54,12 @@ namespace Savanna.Logic
         /// </summary>
         public Lion()
         {
-            Vision = DefaultVision;
             Speed = DefaultSpeed;
-            Stamina = DefaultMaxStamina;
+            Vision = DefaultVision;
+            MaxHealth = DefaultMaxHealth;
+            Health = MaxHealth;
+            MaxStamina = DefaultMaxStamina;
+            Stamina = MaxStamina;
         }
 
         /// <summary>
@@ -143,7 +151,7 @@ namespace Savanna.Logic
                     new AnimalCoordinates(self.Animal, self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column), antelope)
             }).ToList();
 
-            Double afterMoveDistance = 0;
+            double afterMoveDistance = 0;
             afterMoveDistance = directionWithDistanceToEnemy.Min(value => value.distance);
 
             var returnDirection = directionWithDistanceToEnemy

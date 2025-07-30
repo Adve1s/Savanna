@@ -20,7 +20,9 @@ namespace Savanna.Logic
         protected abstract int DefaultSpeed { get; }
         protected abstract int DefaultVision { get; }
         protected abstract int DefaultMaxStamina { get; }
+        protected abstract double DefaultMaxHealth { get; }
         protected abstract int StaminaAddition { get; }
+        protected abstract double HealthDeduction { get; }
         protected abstract (int StaminaChange, int Weight) RestInfo {  get; }
         protected abstract (int StaminaChange, int Weight) SleepInfo {  get; }
         protected abstract (int StaminaChange, int Weight) MoveInfo {  get; }
@@ -29,6 +31,21 @@ namespace Savanna.Logic
         /// Gets animal current stamina
         /// </summary>
         public int Stamina { get; protected set; }
+
+        /// <summary>
+        /// Gets animal current max stamina
+        /// </summary>
+        public int MaxStamina { get; protected set; }
+
+        /// <summary>
+        /// Gets Animal current Health
+        /// </summary>
+        public double Health { get; protected set; }
+
+        /// <summary>
+        /// Gets Animal current max Health
+        /// </summary>
+        public double MaxHealth { get; protected set; }
 
         /// <summary>
         /// Gets Animal vision range

@@ -23,10 +23,13 @@ namespace Savanna.Logic
         private const int ANTELOPE_DEFAULT_SPEED = 3;
         private const int ANTELOPE_DEFAULT_VISION = 4;
         private const int ANTELOPE_DEFAULT_MAX_STAMINA = 100;
+        private const double ANTELOPE_DEFAULT_MAX_HEALTH = 100;
         private const int ANTELOPE_STAMINA_ADDITION = 25;
-        private const Double REST_RECOVERY_PRECENTAGE = 0.1;
-        private const Double SLEEP_RECOVERY_PRECENTAGE = 0.5;
-        private const Double EAT_GRASS_SPENDING_PRECENTAGE = 0.05;
+        private const double ANTELOPE_HEALTH_DEDUCTION = 0.5;
+
+        private const double REST_RECOVERY_PRECENTAGE = 0.10;
+        private const double SLEEP_RECOVERY_PRECENTAGE = 0.33;
+        private const double EAT_GRASS_SPENDING_PRECENTAGE = 0.05;
         private const int REST_POSIBILITY_WEIGHT = 20;
         private const int SLEEP_POSIBILITY_WEIGHT = 10;
         private const int MOVE_POSIBILITY_WEIGHT = 60;
@@ -40,9 +43,11 @@ namespace Savanna.Logic
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
         protected override int DefaultVision => ANTELOPE_DEFAULT_VISION;
         protected override int DefaultMaxStamina => ANTELOPE_DEFAULT_MAX_STAMINA;
+        protected override double DefaultMaxHealth => ANTELOPE_DEFAULT_MAX_HEALTH;
         protected override int StaminaAddition => ANTELOPE_STAMINA_ADDITION;
-        protected override (int StaminaChange, int Weight) RestInfo => ((int)(Stamina*REST_RECOVERY_PRECENTAGE),REST_POSIBILITY_WEIGHT);
-        protected override (int StaminaChange, int Weight) SleepInfo => ((int)(Stamina * SLEEP_RECOVERY_PRECENTAGE), SLEEP_POSIBILITY_WEIGHT);
+        protected override double HealthDeduction => ANTELOPE_HEALTH_DEDUCTION;
+        protected override (int StaminaChange, int Weight) RestInfo => ((int)(MaxStamina *REST_RECOVERY_PRECENTAGE),REST_POSIBILITY_WEIGHT);
+        protected override (int StaminaChange, int Weight) SleepInfo => ((int)(MaxStamina * SLEEP_RECOVERY_PRECENTAGE), SLEEP_POSIBILITY_WEIGHT);
         protected override (int StaminaChange, int Weight) MoveInfo => (-DefaultMaxStamina / Speed, MOVE_POSIBILITY_WEIGHT);
         protected (int StaminaChange, int Weight) EatGrassInfo => ((int)(-DefaultMaxStamina * EAT_GRASS_SPENDING_PRECENTAGE), EAT_GRASS_POSIBILITY_WEIGHT);
 
@@ -51,9 +56,12 @@ namespace Savanna.Logic
         /// </summary>
         public Antelope() 
         {
-            Vision = DefaultVision;
             Speed = DefaultSpeed;
-            Stamina = DefaultMaxStamina;
+            Vision = DefaultVision;
+            MaxHealth = DefaultMaxHealth;
+            Health = MaxHealth;
+            MaxStamina = DefaultMaxStamina;
+            Stamina = MaxStamina;
         }
 
         /// <summary>
@@ -145,7 +153,7 @@ namespace Savanna.Logic
                     new AnimalCoordinates(self.Animal, self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column), lion)
             }).ToList();
 
-            Double afterMoveDistance = 0;
+            double afterMoveDistance = 0;
             afterMoveDistance = directionWithDistanceToEnemy.Max(value => value.distance);
 
             var returnDirection = directionWithDistanceToEnemy
