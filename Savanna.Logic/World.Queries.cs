@@ -98,7 +98,7 @@ namespace Savanna.Logic
             {
                 for (int j = 0; j < surroundings.GetLength(1); j++)
                 {
-                    if (surroundings[i, j] is T) rivalCoordinates.Add(new AnimalCoordinates(surroundings[i, j], i, j));
+                    if (surroundings[i, j] is T && surroundings[i,j].IsAlive()) rivalCoordinates.Add(new AnimalCoordinates(surroundings[i, j], i, j));
                 }
             }
             return rivalCoordinates;

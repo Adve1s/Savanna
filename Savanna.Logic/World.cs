@@ -15,6 +15,8 @@ namespace Savanna.Logic
     /// </summary>
     public partial class World
     {
+        private const string DecomposingSymbol = "X";
+
         private Animal?[,] _field;
         private AnimalFactory _factory;
 
@@ -50,7 +52,9 @@ namespace Savanna.Logic
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    if(_field[i, j] != null) returnField[i,j] = _field[i,j].DisplaySymbol;
+                    if (_field[i, j] != null)
+                        if (_field[i, j].IsAlive()) returnField[i, j] = _field[i, j].DisplaySymbol;
+                        else returnField[i, j] = DecomposingSymbol;
                 }
             }
             return returnField;
@@ -87,9 +91,15 @@ namespace Savanna.Logic
         private void AnimalDoActions(int row, int column)
         {
             AnimalCoordinates animalGlobaly = new AnimalCoordinates(_field[row, column], row, column);
-            animalGlobaly.Animal.AddPerRoundStamina();
-            (Animal[,] visibleArea, AnimalCoordinates animalLocaly) = GetVisibleArea(animalGlobaly.Row, animalGlobaly.Column);
-            animalGlobaly.Animal.DoAction(this,visibleArea, animalLocaly, animalGlobaly);
+            animalGlobaly.Animal.PerRoundStatusChanges();
+            if (animalGlobaly.Animal.IsAlive()) 
+            {
+                (Animal[,] visibleArea, AnimalCoordinates animalLocaly) = GetVisibleArea(animalGlobaly.Row, animalGlobaly.Column);
+                animalGlobaly.Animal.DoAction(this, visibleArea, animalLocaly, animalGlobaly);
+            }else if (animalGlobaly.Animal.IsDecomposed())
+            {
+                _field[row, column] = null;
+            }
         }
 
         /// <summary>

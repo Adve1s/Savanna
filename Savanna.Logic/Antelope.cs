@@ -21,19 +21,22 @@ namespace Savanna.Logic
         private const string ANTELOPE_DISPLAY_SYMBOL = "A";
         private const char ANTELOPE_CREATION_KEY = 'A';
         private const int ANTELOPE_DEFAULT_SPEED = 3;
-        private const int ANTELOPE_DEFAULT_VISION = 4;
-        private const int ANTELOPE_DEFAULT_MAX_STAMINA = 100;
-        private const double ANTELOPE_DEFAULT_MAX_HEALTH = 100;
-        private const int ANTELOPE_STAMINA_ADDITION = 25;
-        private const double ANTELOPE_HEALTH_DEDUCTION = 0.5;
+        private const int ANTELOPE_DEFAULT_VISION = 5;
+        private const int ANTELOPE_DEFAULT_ENDURANCE = 8;
+        private const int ANTELOPE_DEFAULT_DEFENCE = 2;
 
-        private const double REST_RECOVERY_PRECENTAGE = 0.10;
-        private const double SLEEP_RECOVERY_PRECENTAGE = 0.33;
-        private const double EAT_GRASS_SPENDING_PRECENTAGE = 0.05;
-        private const int REST_POSIBILITY_WEIGHT = 20;
-        private const int SLEEP_POSIBILITY_WEIGHT = 10;
-        private const int MOVE_POSIBILITY_WEIGHT = 60;
-        private const int EAT_GRASS_POSIBILITY_WEIGHT = 20;
+        private const int ANTELOPE_ROUNDS_TO_DECOMPOSE = 10;
+        private const double ANTELOPE_HEALTH_DEDUCTION = 0.5;
+        private const double ANTELOPE_TIRED_PRECENTAGE = 0.4;
+
+        private const int REST_POSIBILITY_WEIGHT = 25;
+        private const int SLEEP_POSIBILITY_WEIGHT = 5;
+        private const int MOVE_POSIBILITY_WEIGHT = 65;
+        private const int EAT_GRASS_POSIBILITY_WEIGHT = 5;
+
+        private const double EAT_GRASS_ACTION_COST_MULTIPLIER = 0.2;
+        private const double EAT_GRASS_HEALTH_GAIN_PRECENTAGE = 0.1;
+        private const double ANTELOPE_HUNGRY_THRESHOLD = 10;
 
         /// <summary>
         /// Animal settings used
@@ -42,25 +45,31 @@ namespace Savanna.Logic
         public override char CreationKey => ANTELOPE_CREATION_KEY;
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
         protected override int DefaultVision => ANTELOPE_DEFAULT_VISION;
-        protected override int DefaultMaxStamina => ANTELOPE_DEFAULT_MAX_STAMINA;
-        protected override double DefaultMaxHealth => ANTELOPE_DEFAULT_MAX_HEALTH;
-        protected override int StaminaAddition => ANTELOPE_STAMINA_ADDITION;
-        protected override double HealthDeduction => ANTELOPE_HEALTH_DEDUCTION;
-        protected override (int StaminaChange, int Weight) RestInfo => ((int)(MaxStamina *REST_RECOVERY_PRECENTAGE),REST_POSIBILITY_WEIGHT);
-        protected override (int StaminaChange, int Weight) SleepInfo => ((int)(MaxStamina * SLEEP_RECOVERY_PRECENTAGE), SLEEP_POSIBILITY_WEIGHT);
-        protected override (int StaminaChange, int Weight) MoveInfo => (-DefaultMaxStamina / Speed, MOVE_POSIBILITY_WEIGHT);
-        protected (int StaminaChange, int Weight) EatGrassInfo => ((int)(-DefaultMaxStamina * EAT_GRASS_SPENDING_PRECENTAGE), EAT_GRASS_POSIBILITY_WEIGHT);
+        protected override int DefaultEndurance => ANTELOPE_DEFAULT_ENDURANCE;
+        protected override int DefaultDefence => ANTELOPE_DEFAULT_DEFENCE;
+
+        protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
+        protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
+
+        protected override int RoundsToDecompose => ANTELOPE_ROUNDS_TO_DECOMPOSE;
+        protected override double PerRoundHealthDeduction => ANTELOPE_HEALTH_DEDUCTION;
+        protected override double TiredStaminaThreshold => MaxStamina * ANTELOPE_TIRED_PRECENTAGE;
+
+        protected override (double StaminaChange, int Weight) RestInfo => (REST_STAMINA_RECOVERY * Endurance, REST_POSIBILITY_WEIGHT);
+        protected override (double StaminaChange, int Weight) SleepInfo => (MaxStamina * SLEEP_STAMINA_RECOVERY_PRECENTAGE, SLEEP_POSIBILITY_WEIGHT);
+        protected override (double StaminaChange, int Weight) MoveInfo => (-DEFAULT_ACTION_STAMINA_COST, MOVE_POSIBILITY_WEIGHT);
+        protected (double StaminaChange, int Weight, double Healing) EatGrassInfo => (-DEFAULT_ACTION_STAMINA_COST * EAT_GRASS_ACTION_COST_MULTIPLIER, EAT_GRASS_POSIBILITY_WEIGHT, MaxHealth * EAT_GRASS_HEALTH_GAIN_PRECENTAGE);
 
         /// <summary>
         /// Initializes new instance of Antelope
         /// </summary>
-        public Antelope() 
+        public Antelope()
         {
             Speed = DefaultSpeed;
             Vision = DefaultVision;
-            MaxHealth = DefaultMaxHealth;
+            Endurance = DefaultEndurance;
+            Defence = DefaultDefence;
             Health = MaxHealth;
-            MaxStamina = DefaultMaxStamina;
             Stamina = MaxStamina;
         }
 
@@ -71,30 +80,38 @@ namespace Savanna.Logic
         /// <param name="surroundings">Surroundings within vision range</param>
         /// <param name="selfLocal">Own position within vision range</param>
         /// <param name="selfGlobal">Own position within world</param>
-        public override void DoAction(World world,Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
+        public override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
         {
             surroundings[selfLocal.Row, selfLocal.Column] = null;
             var lionPositions = World.GetTypePositionsList<Lion>(surroundings);
             var actions = new List<(Action, int)>();
-            bool canMove = selfLocal.Animal.Stamina + MoveInfo.StaminaChange >= 0;
-            if (!canMove)
+            if (lionPositions.Count() > 0)
+            {
+                var direction = DecideMoveDirection(selfLocal, surroundings, lionPositions);
+                if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
+                else actions.Add((Rest, RestInfo.Weight));
+            }
+            else if (Health < ANTELOPE_HUNGRY_THRESHOLD)
+            {
+                actions.Add((EatGrass, EatGrassInfo.Weight));
+            }
+            else if (Stamina < TiredStaminaThreshold)
             {
                 actions.Add((Sleep, SleepInfo.Weight));
-                actions.Add((Rest, RestInfo.Weight));
-            }
-            else if (lionPositions.Count() > 0)
-            {
-                var direction = DecideMoveDirection(selfLocal,surroundings, lionPositions);
-                if (direction != null) actions.Add(( () => Move(world,selfGlobal,(Direction)direction), MoveInfo.Weight));
-                else actions.Add((Rest,RestInfo.Weight));
             }
             else
             {
-                var direction = DecideMoveDirection(selfLocal, surroundings);
-                if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
+                if (HaveEnoughStamina(selfLocal.Animal.Stamina, MoveInfo.StaminaChange))
+                {
+                    var direction = DecideMoveDirection(selfLocal, surroundings);
+                    if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
+                }
+                if (HaveEnoughStamina(selfLocal.Animal.Stamina, EatGrassInfo.StaminaChange))
+                {
+                    actions.Add((EatGrass, EatGrassInfo.Weight));
+                }
                 actions.Add((Rest, RestInfo.Weight));
                 actions.Add((Sleep, SleepInfo.Weight));
-                actions.Add((EatGrass, EatGrassInfo.Weight));
             }
             ChooseRandomWeightedAction(actions)();
         }
@@ -148,7 +165,7 @@ namespace Savanna.Logic
         {
             var directionWithDistanceToEnemy = directions.Select(direction => new
             {
-                direction = direction,
+                direction,
                 distance = World.DistanceToCalculator(
                     new AnimalCoordinates(self.Animal, self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column), lion)
             }).ToList();
@@ -168,10 +185,17 @@ namespace Savanna.Logic
         /// <summary>
         /// Antelope decides to stop to eat
         /// </summary>
-        /// <returns>Antelope eat action</returns>
-        protected void EatGrass()
+        private void EatGrass()
         {
-            Stamina += EatGrassInfo.StaminaChange;
+            if (HaveEnoughStamina(Stamina, EatGrassInfo.StaminaChange))
+            {
+                Stamina += EatGrassInfo.StaminaChange;
+                Heal(EatGrassInfo.Healing);
+            }
+            else
+            {
+                Rest();
+            }
         }
     }
 }
