@@ -13,34 +13,35 @@ namespace Savanna.Logic
     /// </summary>
     internal class Lion : Animal
     {
-        /// <summary>
-        /// Lion settings as constants
-        /// </summary>
+        // Lion settings as constants
         private const string LION_DISPLAY_SYMBOL = "L";
         private const char LION_CREATION_KEY = 'L';
         private const int LION_DEFAULT_SPEED = 8;
         private const int LION_DEFAULT_VISION = 4;
         private const int LION_DEFAULT_ENDURANCE = 2;
-        private const int LION_DEFAULT_DEFENCE = 1;
+        private const int LION_DEFAULT_DEFENCE = 4;
 
         private const int LION_ROUNDS_TO_DECOMPOSE = 15;
         private const double LION_HEALTH_DEDUCTION = 0.5;
         private const double LION_TIRED_PRECENTAGE = 0.7;
+        private const int LION_REPRODUCTION_RANGE = 2;
+        private const double LION_MAX_AGE = 15;
+        private const double LION_CHILDREN_BEARING_AGE = 3;
+        private const double LION_CHILDREN_PAUSE_TIME = 2.5;
+        private const double LION_HUNGRY_PRECENTAGE = 0.5;
 
-        private const int REST_POSIBILITY_WEIGHT = 20;
-        private const int SLEEP_POSIBILITY_WEIGHT = 5;
-        private const int MOVE_POSIBILITY_WEIGHT = 60;
-        private const int ROAR_POSIBILITY_WEIGHT = 15;
+        private const int REST_POSIBILITY_WEIGHT = 30;
+        private const int SLEEP_POSIBILITY_WEIGHT = 6;
+        private const int MOVE_POSIBILITY_WEIGHT = 54;
+        private const int ROAR_POSIBILITY_WEIGHT = 10;
 
         private const double ROAR_ACTION_COST_MULTIPLIER = 0.4;
-        private const double ATTACK_ACTION_COST_MULTIPLIER = 0.5;
+        private const double ATTACK_ACTION_COST_MULTIPLIER = 0.2;
         private const double ATTACK_DAMAGE_MULTIPLIER = 0.8;
-        private const double ATTACK_HEALTH_GAIN_PRECENTAGE = 0.5;
+        private const double ATTACK_KILL_HEALTH_GAIN_PRECENTAGE = 0.5;
+        private const double SMELL_ACTION_COST_MULTIPLIER = 0.4;
 
-
-        /// <summary>
-        /// Animal settings used
-        /// </summary>
+        // Animal settings used
         public override string DisplaySymbol => LION_DISPLAY_SYMBOL;
         public override char CreationKey => LION_CREATION_KEY;
         protected override int DefaultSpeed => LION_DEFAULT_SPEED;
@@ -48,21 +49,24 @@ namespace Savanna.Logic
         protected override int DefaultEndurance => LION_DEFAULT_ENDURANCE;
         protected override int DefaultDefence => LION_DEFAULT_DEFENCE;
 
-
         protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
         protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
 
         protected override int RoundsToDecompose => LION_ROUNDS_TO_DECOMPOSE;
         protected override double PerRoundHealthDeduction => LION_HEALTH_DEDUCTION;
         protected override double TiredStaminaThreshold => MaxStamina * LION_TIRED_PRECENTAGE;
-
+        public override int ReproductionRange => LION_REPRODUCTION_RANGE;
+        protected override double MaxAgeLimit => LION_MAX_AGE;
+        protected override double ChildrenBearingAge => LION_CHILDREN_BEARING_AGE;
+        protected override double ChildrenPauseTime => LION_CHILDREN_PAUSE_TIME;
+        protected override double HungryThreshold => MaxHealth * LION_HUNGRY_PRECENTAGE;
 
         protected override (double StaminaChange, int Weight) RestInfo => (REST_STAMINA_RECOVERY * Endurance, REST_POSIBILITY_WEIGHT);
         protected override (double StaminaChange, int Weight) SleepInfo => (MaxStamina * SLEEP_STAMINA_RECOVERY_PRECENTAGE, SLEEP_POSIBILITY_WEIGHT);
         protected override (double StaminaChange, int Weight) MoveInfo => (-DEFAULT_ACTION_STAMINA_COST, MOVE_POSIBILITY_WEIGHT);
         protected (double StaminaChange, int Weight) RoarInfo => (-DEFAULT_ACTION_STAMINA_COST * ROAR_ACTION_COST_MULTIPLIER, ROAR_POSIBILITY_WEIGHT);
         protected (double StaminaChange, double Damage) AttackInfo => (-DEFAULT_ACTION_STAMINA_COST * ATTACK_ACTION_COST_MULTIPLIER, DEFAULT_MAX_HEALTH*ATTACK_DAMAGE_MULTIPLIER);
-
+        protected (double StaminaChange, int Weight) SmellInfo => (-DEFAULT_ACTION_STAMINA_COST * SMELL_ACTION_COST_MULTIPLIER,0);
 
         /// <summary>
         /// Initializes new instance of Lion
@@ -84,33 +88,38 @@ namespace Savanna.Logic
         /// <param name="surroundings">Surroundings within vision range</param>
         /// <param name="selfLocal">Own position within vision range</param>
         /// <param name="selfGlobal">Own position within world</param>
-        public override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
+        protected override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
         {
             surroundings[selfLocal.Row, selfLocal.Column] = null;
-            var antelopePositions = World.GetTypePositionsList<Antelope>(surroundings);
+            var antelopePositions = GetTypePositionsList<Antelope>(surroundings);
             var actions = new List<(Action, int)>();
             if (antelopePositions.Count() > 0)
             {
                 var antelope = GetClosestAntelope(selfLocal, antelopePositions);
-                if(World.DistanceToCalculator(selfLocal,antelope) == 1)
+                if(antelope != null && DistanceToCalculator(selfLocal,(AnimalCoordinates)antelope) == 1)
                 {
-                    Attack(antelope);
+                    actions.Add((()=>Attack((AnimalCoordinates)antelope), 0));
                 }
-
-                var direction = DecideMoveDirection(selfLocal, surroundings, antelopePositions);
-                if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
-                else actions.Add((Rest, RestInfo.Weight));
+                else
+                {
+                    var direction = DecideMoveDirection(selfLocal, surroundings, antelopePositions);
+                    actions.Add((() => Move(world, selfGlobal, direction), MoveInfo.Weight));
+                }
             }
             else if (Stamina < TiredStaminaThreshold)
             {
                 actions.Add((Sleep, SleepInfo.Weight));
+            }
+            else if (Health < HungryThreshold)
+            {
+                actions.Add((() => Smell(world,selfGlobal),0));
             }
             else
             {
                 if (HaveEnoughStamina(selfLocal.Animal.Stamina, MoveInfo.StaminaChange))
                 {
                     var direction = DecideMoveDirection(selfLocal, surroundings);
-                    if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
+                    actions.Add((() => Move(world, selfGlobal, direction), MoveInfo.Weight));
                 }
                 if (HaveEnoughStamina(selfLocal.Animal.Stamina, RoarInfo.StaminaChange))
                 {
@@ -137,7 +146,8 @@ namespace Savanna.Logic
             if (antelopes != null)
             {
                 var antelope = GetClosestAntelope(self, antelopes);
-                directions = GetClosestDirectionToAntelope(directions, self, antelope);
+                if (antelope == null) return Movement.RandomDirection(directions);
+                directions = GetClosestDirectionToAntelope(directions, self, (AnimalCoordinates)antelope);
             }
             return Movement.RandomDirection(directions);
         }
@@ -149,13 +159,14 @@ namespace Savanna.Logic
         /// <param name="self">own position</param>
         /// <param name="antelopes">all visible antelope positions</param>
         /// <returns>AnimalCoordinates of closest antelope.</returns>
-        private AnimalCoordinates GetClosestAntelope(AnimalCoordinates self, List<AnimalCoordinates> antelopes)
+        private AnimalCoordinates? GetClosestAntelope(AnimalCoordinates self, List<AnimalCoordinates> antelopes)
         {
+            if (antelopes.Count == 0) return null;
             var random = new Random();
             double closestEnemies = antelopes
-                .Min(enemy => World.DistanceToCalculator(self, enemy));
+                .Min(enemy => DistanceToCalculator(self, enemy));
             List<AnimalCoordinates> enemies = antelopes
-                .Where(enemy => World.DistanceToCalculator(self, enemy) == closestEnemies)
+                .Where(enemy => DistanceToCalculator(self, enemy) == closestEnemies)
                 .ToList();
             var enemy = enemies[random.Next(enemies.Count)];
             return enemy;
@@ -173,13 +184,10 @@ namespace Savanna.Logic
             var directionWithDistanceToEnemy = directions.Select(direction => new
             {
                 direction,
-                distance = World.DistanceToCalculator(
+                distance = DistanceToCalculator(
                     new AnimalCoordinates(self.Animal, self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column), antelope)
             }).ToList();
-
-            double afterMoveDistance = 0;
-            afterMoveDistance = directionWithDistanceToEnemy.Min(value => value.distance);
-
+            double afterMoveDistance = directionWithDistanceToEnemy.Min(value => value.distance);
             var returnDirection = directionWithDistanceToEnemy
                     .Where(value => value.distance == afterMoveDistance)
                     .Select(value => value.direction)
@@ -193,14 +201,8 @@ namespace Savanna.Logic
         /// </summary>
         private void Roar()
         {
-            if (HaveEnoughStamina(Stamina, RoarInfo.StaminaChange))
-            {
-                Stamina += RoarInfo.StaminaChange;
-            }
-            else
-            {
-                Rest();
-            }
+            if (HaveEnoughStamina(Stamina, RoarInfo.StaminaChange)) Stamina += RoarInfo.StaminaChange;
+            else Rest();
         }
 
         /// <summary>
@@ -213,13 +215,27 @@ namespace Savanna.Logic
             {
                 Stamina += AttackInfo.StaminaChange;
                 antelope.Animal.Damage(AttackInfo.Damage);
-                if (!antelope.Animal.IsAlive()) Heal(MaxHealth * ATTACK_HEALTH_GAIN_PRECENTAGE);
+                if (!antelope.Animal.IsAlive()) Heal(MaxHealth * ATTACK_KILL_HEALTH_GAIN_PRECENTAGE);
             }
-            else
-            {
-                Rest();
-            }
+            else Rest();
+        }
 
+        /// <summary>
+        /// Smell to determine direction to prey
+        /// </summary>
+        /// <param name="world">World where lion lives</param>
+        /// <param name="self">Own position to smell from</param>
+        private void Smell(World world, AnimalCoordinates self)
+        {
+            if(HaveEnoughStamina(Stamina, MoveInfo.StaminaChange + SmellInfo.StaminaChange))
+            {
+                Stamina += SmellInfo.StaminaChange;
+                var area = world.GetField();
+                var antelopePositions = GetTypePositionsList<Antelope>(area);
+                var direction = DecideMoveDirection(self, area, antelopePositions);
+                Move(world, self, direction);
+            }
+            else Rest();
         }
 
     }

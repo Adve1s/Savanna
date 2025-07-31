@@ -90,16 +90,9 @@ namespace Savanna.Logic
         /// <param name="column">Column of the animal</param>
         private void AnimalDoActions(int row, int column)
         {
-            AnimalCoordinates animalGlobaly = new AnimalCoordinates(_field[row, column], row, column);
-            animalGlobaly.Animal.PerRoundStatusChanges();
-            if (animalGlobaly.Animal.IsAlive()) 
-            {
-                (Animal[,] visibleArea, AnimalCoordinates animalLocaly) = GetVisibleArea(animalGlobaly.Row, animalGlobaly.Column);
-                animalGlobaly.Animal.DoAction(this, visibleArea, animalLocaly, animalGlobaly);
-            }else if (animalGlobaly.Animal.IsDecomposed())
-            {
-                _field[row, column] = null;
-            }
+            AnimalCoordinates animal = new AnimalCoordinates(_field[row, column], row, column);
+            if (!animal.Animal.IsDecomposed()) animal.Animal.Turn(this, animal);
+            else _field[row, column] = null;
         }
 
         /// <summary>
@@ -111,13 +104,31 @@ namespace Savanna.Logic
             var random = new Random();
             int randomRow = random.Next(0, Height);
             int randomColumn = random.Next(0, Width);
-            while (true)
+            bool haveEmptySpace = _field.Cast<Object>().Any(field => field == null);
+            while (haveEmptySpace)
             {
-                if(_field[randomRow, randomColumn] == null) { break; }
+                if (_field[randomRow, randomColumn] == null) { break; }
                 randomRow = random.Next(0, Height);
                 randomColumn = random.Next(0, Width);
             }
             _field[randomRow, randomColumn] = _factory.CreateAnimal(key);
+        }
+
+        /// <summary>
+        /// Add an animal to specific place on board from mother
+        /// </summary>
+        /// <param name="key">Key by which animal is added</param>
+        /// <param name="mother">Field where is mother at</param>
+        /// <param name="direction">Direction where animal is born</param>
+        internal void AddAnimal(char key, AnimalCoordinates? mother, Direction? direction)
+        {
+            if (mother != null && direction != null)
+            {
+                int targetRow = mother.Value.Row + Movement.Directions[direction.Value].row;
+                int targetColumn = mother.Value.Column + Movement.Directions[direction.Value].column;
+                _field[targetRow, targetColumn] = _factory.CreateAnimal(key); 
+            }
+
         }
 
         /// <summary>
@@ -135,5 +146,11 @@ namespace Savanna.Logic
                 (_field[animal.Row, animal.Column], _field[targetRow, targetColumn]) = (_field[targetRow, targetColumn], _field[animal.Row, animal.Column]);
             }
         }
+
+        /// <summary>
+        /// Gets field
+        /// </summary>
+        /// <returns>Field</returns>
+        internal Animal?[,] GetField() => _field;
     }
 }

@@ -24,8 +24,8 @@ namespace Savanna
         {
             //int height = Input.GetValidIntiger(UIConstants.HeightMessage);
             //int width = Input.GetValidIntiger(UIConstants.WidthMessage);
-            int height = 10;
-            int width = 30;
+            int height = 25;
+            int width = 60;
             _savannaWorld = new World(height,width);
             _display = new Display();
         }

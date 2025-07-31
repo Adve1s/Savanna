@@ -15,9 +15,7 @@ namespace Savanna.Logic
     /// </summary>
     internal class Antelope : Animal
     {
-        /// <summary>
-        /// Antelope settings as constants
-        /// </summary>
+        // Antelope settings as constants
         private const string ANTELOPE_DISPLAY_SYMBOL = "A";
         private const char ANTELOPE_CREATION_KEY = 'A';
         private const int ANTELOPE_DEFAULT_SPEED = 3;
@@ -28,19 +26,21 @@ namespace Savanna.Logic
         private const int ANTELOPE_ROUNDS_TO_DECOMPOSE = 10;
         private const double ANTELOPE_HEALTH_DEDUCTION = 0.5;
         private const double ANTELOPE_TIRED_PRECENTAGE = 0.4;
+        private const int ANTELOPE_REPRODUCTION_RANGE = 2;
+        private const double ANTELOPE_MAX_AGE = 18;
+        private const double ANTELOPE_CHILDREN_BEARING_AGE = 2;
+        private const double ANTELOPE_CHILDREN_PAUSE_TIME = 1.5;
+        private const double ANTELOPE_HUNGRY_PRECENTAGE = 0.1;
 
         private const int REST_POSIBILITY_WEIGHT = 25;
         private const int SLEEP_POSIBILITY_WEIGHT = 5;
-        private const int MOVE_POSIBILITY_WEIGHT = 65;
-        private const int EAT_GRASS_POSIBILITY_WEIGHT = 5;
+        private const int MOVE_POSIBILITY_WEIGHT = 35;
+        private const int EAT_GRASS_POSIBILITY_WEIGHT = 35;
 
         private const double EAT_GRASS_ACTION_COST_MULTIPLIER = 0.2;
         private const double EAT_GRASS_HEALTH_GAIN_PRECENTAGE = 0.1;
-        private const double ANTELOPE_HUNGRY_THRESHOLD = 10;
 
-        /// <summary>
-        /// Animal settings used
-        /// </summary>
+        // Animal settings used
         public override string DisplaySymbol => ANTELOPE_DISPLAY_SYMBOL;
         public override char CreationKey => ANTELOPE_CREATION_KEY;
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
@@ -54,6 +54,11 @@ namespace Savanna.Logic
         protected override int RoundsToDecompose => ANTELOPE_ROUNDS_TO_DECOMPOSE;
         protected override double PerRoundHealthDeduction => ANTELOPE_HEALTH_DEDUCTION;
         protected override double TiredStaminaThreshold => MaxStamina * ANTELOPE_TIRED_PRECENTAGE;
+        public override int ReproductionRange => ANTELOPE_REPRODUCTION_RANGE;
+        protected override double MaxAgeLimit => ANTELOPE_MAX_AGE;
+        protected override double ChildrenBearingAge => ANTELOPE_CHILDREN_BEARING_AGE;
+        protected override double ChildrenPauseTime => ANTELOPE_CHILDREN_PAUSE_TIME;
+        protected override double HungryThreshold => MaxHealth * ANTELOPE_HUNGRY_PRECENTAGE;
 
         protected override (double StaminaChange, int Weight) RestInfo => (REST_STAMINA_RECOVERY * Endurance, REST_POSIBILITY_WEIGHT);
         protected override (double StaminaChange, int Weight) SleepInfo => (MaxStamina * SLEEP_STAMINA_RECOVERY_PRECENTAGE, SLEEP_POSIBILITY_WEIGHT);
@@ -80,10 +85,10 @@ namespace Savanna.Logic
         /// <param name="surroundings">Surroundings within vision range</param>
         /// <param name="selfLocal">Own position within vision range</param>
         /// <param name="selfGlobal">Own position within world</param>
-        public override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
+        protected override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
         {
             surroundings[selfLocal.Row, selfLocal.Column] = null;
-            var lionPositions = World.GetTypePositionsList<Lion>(surroundings);
+            var lionPositions = GetTypePositionsList<Lion>(surroundings);
             var actions = new List<(Action, int)>();
             if (lionPositions.Count() > 0)
             {
@@ -91,7 +96,7 @@ namespace Savanna.Logic
                 if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
                 else actions.Add((Rest, RestInfo.Weight));
             }
-            else if (Health < ANTELOPE_HUNGRY_THRESHOLD)
+            else if (Health < HungryThreshold)
             {
                 actions.Add((EatGrass, EatGrassInfo.Weight));
             }
@@ -146,9 +151,9 @@ namespace Savanna.Logic
         {
             var random = new Random();
             double closestEnemies = lions
-                .Min(enemy => World.DistanceToCalculator(self, enemy));
+                .Min(enemy => DistanceToCalculator(self, enemy));
             List<AnimalCoordinates> enemies = lions
-                .Where(enemy => World.DistanceToCalculator(self, enemy) == closestEnemies)
+                .Where(enemy => DistanceToCalculator(self, enemy) == closestEnemies)
                 .ToList();
             var enemy = enemies[random.Next(enemies.Count)];
             return enemy;
@@ -166,13 +171,10 @@ namespace Savanna.Logic
             var directionWithDistanceToEnemy = directions.Select(direction => new
             {
                 direction,
-                distance = World.DistanceToCalculator(
+                distance = DistanceToCalculator(
                     new AnimalCoordinates(self.Animal, self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column), lion)
             }).ToList();
-
-            double afterMoveDistance = 0;
-            afterMoveDistance = directionWithDistanceToEnemy.Max(value => value.distance);
-
+            double afterMoveDistance = directionWithDistanceToEnemy.Max(value => value.distance);
             var returnDirection = directionWithDistanceToEnemy
                     .Where(value => value.distance == afterMoveDistance)
                     .Select(value => value.direction)
@@ -192,10 +194,7 @@ namespace Savanna.Logic
                 Stamina += EatGrassInfo.StaminaChange;
                 Heal(EatGrassInfo.Healing);
             }
-            else
-            {
-                Rest();
-            }
+            else Rest();
         }
     }
 }
