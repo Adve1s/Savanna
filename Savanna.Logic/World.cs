@@ -15,8 +15,10 @@ namespace Savanna.Logic
     /// </summary>
     public partial class World
     {
+        private const string DecomposingSymbol = "X";
+
         private Animal?[,] _field;
-        private AnimalFactory _factory;
+        internal AnimalFactory AnimalFactory { get; }
 
         /// <summary>
         /// Gets the field height
@@ -36,7 +38,7 @@ namespace Savanna.Logic
             Height = height;
             Width = width;
             _field = new Animal[Height, Width];
-            _factory = new AnimalFactory();
+            AnimalFactory = new AnimalFactory();
         }
 
         /// <summary>
@@ -50,7 +52,9 @@ namespace Savanna.Logic
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    if(_field[i, j] != null) returnField[i,j] = _field[i,j].DisplaySymbol;
+                    if (_field[i, j] != null)
+                        if (_field[i, j].IsAlive()) returnField[i, j] = _field[i, j].DisplaySymbol;
+                        else returnField[i, j] = DecomposingSymbol;
                 }
             }
             return returnField;
@@ -86,10 +90,9 @@ namespace Savanna.Logic
         /// <param name="column">Column of the animal</param>
         private void AnimalDoActions(int row, int column)
         {
-            AnimalCoordinates animalGlobaly = new AnimalCoordinates(_field[row, column], row, column);
-            animalGlobaly.Animal.AddPerRoundStamina();
-            (Animal[,] visibleArea, AnimalCoordinates animalLocaly) = GetVisibleArea(animalGlobaly.Row, animalGlobaly.Column);
-            animalGlobaly.Animal.DoAction(this,visibleArea, animalLocaly, animalGlobaly);
+            AnimalCoordinates animal = new AnimalCoordinates(row, column, _field[row, column]);
+            if (!animal.Animal.IsDecomposed()) animal.Animal.Turn(this, animal);
+            else _field[row, column] = null;
         }
 
         /// <summary>
@@ -101,29 +104,50 @@ namespace Savanna.Logic
             var random = new Random();
             int randomRow = random.Next(0, Height);
             int randomColumn = random.Next(0, Width);
-            while (true)
+            bool haveEmptySpace = _field.Cast<Object>().Any(field => field == null);
+            while (haveEmptySpace)
             {
-                if(_field[randomRow, randomColumn] == null) { break; }
+                if (_field[randomRow, randomColumn] == null) 
+                {
+                    _field[randomRow, randomColumn] = AnimalFactory.CreateAnimal(key);
+                    break; 
+                }
                 randomRow = random.Next(0, Height);
                 randomColumn = random.Next(0, Width);
             }
-            _field[randomRow, randomColumn] = _factory.CreateAnimal(key);
+
+        }
+
+        /// <summary>
+        /// Adds animal to specified place
+        /// </summary>
+        /// <param name="animal">animal to add</param>
+        /// <param name="place">place to add animal at</param>
+        internal void AddAnimal(Animal animal, AnimalCoordinates? place)
+        {
+            if (place != null && _field[place.Value.Row, place.Value.Column] == null)
+            {
+                _field[place.Value.Row,place.Value.Column] = animal; 
+            }
+
         }
 
         /// <summary>
         /// Moves animal to next position
         /// </summary>
-        /// <param name="row"></param>
-        /// <param name="column"></param>
-        /// <param name="direction"></param>
+        /// <param name="animal">Animal position</param>
+        /// <param name="direction">adirection to move to</param>
         internal void MoveAnimal(AnimalCoordinates animal, Direction direction)
         {
             int targetRow = animal.Row + Movement.Directions[direction].row;
             int targetColumn = animal.Column + Movement.Directions[direction].column;
-            if (targetRow >= 0 && targetRow < Height && targetColumn >= 0 && targetColumn < Width && _field[targetRow, targetColumn] == null)
-            {
-                (_field[animal.Row, animal.Column], _field[targetRow, targetColumn]) = (_field[targetRow, targetColumn], _field[animal.Row, animal.Column]);
-            }
+            (_field[animal.Row, animal.Column], _field[targetRow, targetColumn]) = (_field[targetRow, targetColumn], _field[animal.Row, animal.Column]);
         }
+
+        /// <summary>
+        /// Gets field
+        /// </summary>
+        /// <returns>Field</returns>
+        internal Animal?[,] GetField() => _field;
     }
 }

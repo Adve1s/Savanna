@@ -15,45 +15,67 @@ namespace Savanna.Logic
     /// </summary>
     internal class Antelope : Animal
     {
-        /// <summary>
-        /// Antelope settings as constants
-        /// </summary>
+        // Antelope settings as constants
         private const string ANTELOPE_DISPLAY_SYMBOL = "A";
         private const char ANTELOPE_CREATION_KEY = 'A';
         private const int ANTELOPE_DEFAULT_SPEED = 3;
-        private const int ANTELOPE_DEFAULT_VISION = 4;
-        private const int ANTELOPE_DEFAULT_MAX_STAMINA = 100;
-        private const int ANTELOPE_STAMINA_ADDITION = 25;
-        private const Double REST_RECOVERY_PRECENTAGE = 0.1;
-        private const Double SLEEP_RECOVERY_PRECENTAGE = 0.5;
-        private const Double EAT_GRASS_SPENDING_PRECENTAGE = 0.05;
-        private const int REST_POSIBILITY_WEIGHT = 20;
-        private const int SLEEP_POSIBILITY_WEIGHT = 10;
-        private const int MOVE_POSIBILITY_WEIGHT = 60;
-        private const int EAT_GRASS_POSIBILITY_WEIGHT = 20;
+        private const int ANTELOPE_DEFAULT_VISION = 5;
+        private const int ANTELOPE_DEFAULT_ENDURANCE = 8;
+        private const int ANTELOPE_DEFAULT_DEFENCE = 2;
 
-        /// <summary>
-        /// Animal settings used
-        /// </summary>
+        private const int ANTELOPE_ROUNDS_TO_DECOMPOSE = 10;
+        private const double ANTELOPE_HEALTH_DEDUCTION = 0.5;
+        private const double ANTELOPE_TIRED_PRECENTAGE = 0.4;
+        private const int ANTELOPE_REPRODUCTION_RANGE = 2;
+        private const double ANTELOPE_MAX_AGE = 18;
+        private const double ANTELOPE_CHILDREN_BEARING_AGE = 2;
+        private const double ANTELOPE_CHILDREN_PAUSE_TIME = 1.5;
+        private const double ANTELOPE_HUNGRY_PRECENTAGE = 0.1;
+
+        private const int REST_POSIBILITY_WEIGHT = 25;
+        private const int SLEEP_POSIBILITY_WEIGHT = 5;
+        private const int MOVE_POSIBILITY_WEIGHT = 35;
+        private const int EAT_GRASS_POSIBILITY_WEIGHT = 35;
+
+        private const double EAT_GRASS_ACTION_COST_MULTIPLIER = 0.2;
+        private const double EAT_GRASS_HEALTH_GAIN_PRECENTAGE = 0.1;
+
+        // Animal settings used
         public override string DisplaySymbol => ANTELOPE_DISPLAY_SYMBOL;
         public override char CreationKey => ANTELOPE_CREATION_KEY;
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
         protected override int DefaultVision => ANTELOPE_DEFAULT_VISION;
-        protected override int DefaultMaxStamina => ANTELOPE_DEFAULT_MAX_STAMINA;
-        protected override int StaminaAddition => ANTELOPE_STAMINA_ADDITION;
-        protected override (int StaminaChange, int Weight) RestInfo => ((int)(Stamina*REST_RECOVERY_PRECENTAGE),REST_POSIBILITY_WEIGHT);
-        protected override (int StaminaChange, int Weight) SleepInfo => ((int)(Stamina * SLEEP_RECOVERY_PRECENTAGE), SLEEP_POSIBILITY_WEIGHT);
-        protected override (int StaminaChange, int Weight) MoveInfo => (-DefaultMaxStamina / Speed, MOVE_POSIBILITY_WEIGHT);
-        protected (int StaminaChange, int Weight) EatGrassInfo => ((int)(-DefaultMaxStamina * EAT_GRASS_SPENDING_PRECENTAGE), EAT_GRASS_POSIBILITY_WEIGHT);
+        protected override int DefaultEndurance => ANTELOPE_DEFAULT_ENDURANCE;
+        protected override int DefaultDefence => ANTELOPE_DEFAULT_DEFENCE;
+
+        protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
+        protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
+
+        internal override int RoundsToDecompose => ANTELOPE_ROUNDS_TO_DECOMPOSE;
+        protected override double PerRoundHealthDeduction => ANTELOPE_HEALTH_DEDUCTION;
+        protected override double TiredStaminaThreshold => MaxStamina * ANTELOPE_TIRED_PRECENTAGE;
+        public override int ReproductionRange => ANTELOPE_REPRODUCTION_RANGE;
+        internal override double MaxAgeLimit => ANTELOPE_MAX_AGE;
+        internal override double ChildrenBearingAge => ANTELOPE_CHILDREN_BEARING_AGE;
+        internal override double ChildrenPauseTime => ANTELOPE_CHILDREN_PAUSE_TIME;
+        protected override double HungryThreshold => MaxHealth * ANTELOPE_HUNGRY_PRECENTAGE;
+
+        protected override (double StaminaChange, int Weight) RestInfo => (REST_STAMINA_RECOVERY * Endurance, REST_POSIBILITY_WEIGHT);
+        protected override (double StaminaChange, int Weight) SleepInfo => (MaxStamina * SLEEP_STAMINA_RECOVERY_PRECENTAGE, SLEEP_POSIBILITY_WEIGHT);
+        protected override (double StaminaChange, int Weight) MoveInfo => (-DEFAULT_ACTION_STAMINA_COST, MOVE_POSIBILITY_WEIGHT);
+        protected (double StaminaChange, int Weight, double Healing) EatGrassInfo => (-DEFAULT_ACTION_STAMINA_COST * EAT_GRASS_ACTION_COST_MULTIPLIER, EAT_GRASS_POSIBILITY_WEIGHT, MaxHealth * EAT_GRASS_HEALTH_GAIN_PRECENTAGE);
 
         /// <summary>
         /// Initializes new instance of Antelope
         /// </summary>
-        public Antelope() 
+        public Antelope()
         {
-            Vision = DefaultVision;
             Speed = DefaultSpeed;
-            Stamina = DefaultMaxStamina;
+            Vision = DefaultVision;
+            Endurance = DefaultEndurance;
+            Defence = DefaultDefence;
+            Health = MaxHealth;
+            Stamina = MaxStamina;
         }
 
         /// <summary>
@@ -63,30 +85,37 @@ namespace Savanna.Logic
         /// <param name="surroundings">Surroundings within vision range</param>
         /// <param name="selfLocal">Own position within vision range</param>
         /// <param name="selfGlobal">Own position within world</param>
-        public override void DoAction(World world,Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
+        internal override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
         {
             surroundings[selfLocal.Row, selfLocal.Column] = null;
-            var lionPositions = World.GetTypePositionsList<Lion>(surroundings);
+            var lionPositions = GetTypePositionsList<Lion>(surroundings);
             var actions = new List<(Action, int)>();
-            bool canMove = selfLocal.Animal.Stamina + MoveInfo.StaminaChange >= 0;
-            if (!canMove)
+            if (lionPositions.Count() > 0)
+            {
+                var direction = DecideMoveDirection(selfLocal, surroundings, lionPositions);
+                actions.Add((() => Move(world, selfGlobal, direction), MoveInfo.Weight));
+            }
+            else if (Health < HungryThreshold)
+            {
+                actions.Add((EatGrass, EatGrassInfo.Weight));
+            }
+            else if (Stamina < TiredStaminaThreshold)
             {
                 actions.Add((Sleep, SleepInfo.Weight));
-                actions.Add((Rest, RestInfo.Weight));
-            }
-            else if (lionPositions.Count() > 0)
-            {
-                var direction = DecideMoveDirection(selfLocal,surroundings, lionPositions);
-                if (direction != null) actions.Add(( () => Move(world,selfGlobal,(Direction)direction), MoveInfo.Weight));
-                else actions.Add((Rest,RestInfo.Weight));
             }
             else
             {
-                var direction = DecideMoveDirection(selfLocal, surroundings);
-                if (direction != null) actions.Add((() => Move(world, selfGlobal, (Direction)direction), MoveInfo.Weight));
+                if (HaveEnoughStamina(selfLocal.Animal.Stamina, MoveInfo.StaminaChange))
+                {
+                    var direction = DecideMoveDirection(selfLocal, surroundings);
+                    actions.Add((() => Move(world, selfGlobal, direction), MoveInfo.Weight));
+                }
+                if (HaveEnoughStamina(selfLocal.Animal.Stamina, EatGrassInfo.StaminaChange))
+                {
+                    actions.Add((EatGrass, EatGrassInfo.Weight));
+                }
                 actions.Add((Rest, RestInfo.Weight));
                 actions.Add((Sleep, SleepInfo.Weight));
-                actions.Add((EatGrass, EatGrassInfo.Weight));
             }
             ChooseRandomWeightedAction(actions)();
         }
@@ -99,14 +128,13 @@ namespace Savanna.Logic
         /// <param name="enemies">Positions of enemies within vision range</param>
         /// <param name="allies">Positions of allies within vision range</param>
         /// <returns>Direction where animal chose to go</returns>
-        protected override Direction? DecideMoveDirection(AnimalCoordinates self, Animal[,] surroundings, List<AnimalCoordinates>? enemies = null, List<AnimalCoordinates>? allies = null)
+        internal override Direction? DecideMoveDirection(AnimalCoordinates self, Animal[,] surroundings, List<AnimalCoordinates>? enemies = null, List<AnimalCoordinates>? allies = null)
         {
             var directions = Movement.GetValidDirections(surroundings, self);
             if (directions.Count() == 0) return null;
-            if (enemies != null)
+            if (enemies != null && enemies.Count != 0)
             {
-                var enemy = GetClosestLion(self, enemies);
-                directions = GetFurthestDirectionFromLion(directions, self, enemy);
+                directions = GetFurthestDirectionFromLion(directions, self, GetClosestLion(self, enemies));
             }
             return Movement.RandomDirection(directions);
         }
@@ -117,13 +145,13 @@ namespace Savanna.Logic
         /// <param name="self">own position</param>
         /// <param name="lions">all visible lion positions</param>
         /// <returns>AnimalCoordinates of closest lion.</returns>
-        private AnimalCoordinates GetClosestLion(AnimalCoordinates self, List<AnimalCoordinates> lions)
+        internal AnimalCoordinates GetClosestLion(AnimalCoordinates self, List<AnimalCoordinates> lions)
         {
             var random = new Random();
             double closestEnemies = lions
-                .Min(enemy => World.DistanceToCalculator(self, enemy));
+                .Min(enemy => DistanceToCalculator(self, enemy));
             List<AnimalCoordinates> enemies = lions
-                .Where(enemy => World.DistanceToCalculator(self, enemy) == closestEnemies)
+                .Where(enemy => DistanceToCalculator(self, enemy) == closestEnemies)
                 .ToList();
             var enemy = enemies[random.Next(enemies.Count)];
             return enemy;
@@ -136,18 +164,15 @@ namespace Savanna.Logic
         /// <param name="self">Own position</param>
         /// <param name="lion">Lion position</param>
         /// <returns>List of all equally good directions.</returns>
-        private List<Direction> GetFurthestDirectionFromLion(List<Direction> directions, AnimalCoordinates self, AnimalCoordinates lion)
+        internal List<Direction> GetFurthestDirectionFromLion(List<Direction> directions, AnimalCoordinates self, AnimalCoordinates lion)
         {
             var directionWithDistanceToEnemy = directions.Select(direction => new
             {
-                direction = direction,
-                distance = World.DistanceToCalculator(
-                    new AnimalCoordinates(self.Animal, self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column), lion)
+                direction,
+                distance = DistanceToCalculator(
+                    new AnimalCoordinates(self.Row + Movement.Directions[direction].row, self.Column + Movement.Directions[direction].column, self.Animal), lion)
             }).ToList();
-
-            Double afterMoveDistance = 0;
-            afterMoveDistance = directionWithDistanceToEnemy.Max(value => value.distance);
-
+            double afterMoveDistance = directionWithDistanceToEnemy.Max(value => value.distance);
             var returnDirection = directionWithDistanceToEnemy
                     .Where(value => value.distance == afterMoveDistance)
                     .Select(value => value.direction)
@@ -160,10 +185,14 @@ namespace Savanna.Logic
         /// <summary>
         /// Antelope decides to stop to eat
         /// </summary>
-        /// <returns>Antelope eat action</returns>
-        protected void EatGrass()
+        internal void EatGrass()
         {
-            Stamina += EatGrassInfo.StaminaChange;
+            if (HaveEnoughStamina(Stamina, EatGrassInfo.StaminaChange))
+            {
+                Stamina += EatGrassInfo.StaminaChange;
+                Heal(EatGrassInfo.Healing);
+            }
+            else Rest();
         }
     }
 }

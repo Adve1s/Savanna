@@ -18,7 +18,7 @@ namespace Savanna.Logic
         /// <param name="row">The coordinate row</param>
         /// <param name="column">The coordinate column</param>
         /// <returns>Visible area 2d array</returns>
-        private (Animal[,], AnimalCoordinates) GetVisibleArea(int row, int column)
+        internal (Animal[,] visibleArea, AnimalCoordinates self) GetVisibleArea(int row, int column)
         {
             var animal = _field[row, column];
             (int visibleAreaHeight, int visibleAreaWidth) = GetVisibleDimentions(row, column);
@@ -26,7 +26,7 @@ namespace Savanna.Logic
 
             AnimalCoordinates globalCoordinates = GetGlobalStartVisionAreaCoordinates(animal, row, column);
             int defaultGlobalX = globalCoordinates.Column;
-            var returnCoordinates = new AnimalCoordinates(animal, default, default);
+            var returnCoordinates = new AnimalCoordinates(default, default,animal);
             for (int localY = 0; localY < visibleAreaHeight; localY++)
             {
                 for (int localX = 0; localX < visibleAreaWidth; localX++)
@@ -61,7 +61,7 @@ namespace Savanna.Logic
             else globalRow = row - animal.Vision;
             if (column - animal.Vision < 0) globalColumn = 0;
             else globalColumn = column - animal.Vision;
-            var animalCoordinates = new AnimalCoordinates(animal, globalRow, globalColumn);
+            var animalCoordinates = new AnimalCoordinates(globalRow, globalColumn, animal);
             return animalCoordinates;
         }
 
@@ -85,35 +85,5 @@ namespace Savanna.Logic
             }
             return (visibleAreaHeight, visibleAreaWidth);
         }
-
-        /// <summary>
-        /// Creates a list of visible animals of selected type
-        /// </summary>
-        /// <param name="surroundings">Visible area</param>
-        /// <returns>List of Animal coordinates</returns>
-        internal static List<AnimalCoordinates> GetTypePositionsList<T>(Animal[,] surroundings)
-        {
-            var rivalCoordinates = new List<AnimalCoordinates>();
-            for (int i = 0; i < surroundings.GetLength(0); i++)
-            {
-                for (int j = 0; j < surroundings.GetLength(1); j++)
-                {
-                    if (surroundings[i, j] is T) rivalCoordinates.Add(new AnimalCoordinates(surroundings[i, j], i, j));
-                }
-            }
-            return rivalCoordinates;
-        }
-
-        /// <summary>
-        /// Calculates distance from one field to other
-        /// </summary>
-        /// <param name="from">From coordinates</param>
-        /// <param name="to">To Coordinates</param>
-        /// <returns>Number of moves between fields</returns>
-        internal static double DistanceToCalculator(AnimalCoordinates from, AnimalCoordinates to)
-        {
-            return Math.Max(Math.Abs(from.Row-to.Row), Math.Abs(from.Column - to.Column));
-        }
-
     }
 }

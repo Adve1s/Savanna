@@ -47,10 +47,11 @@ namespace Savanna.Logic
         /// </summary>
         /// <param name="exclude">List of excluded directions</param>
         /// <returns>A random direction</returns>
-        public static Direction RandomDirection(List<Direction> directions) 
+        public static Direction? RandomDirection(List<Direction> directions) 
         {
             var random = new Random();
-            return directions[random.Next(directions.Count)];
+            if (directions.Count > 0) return directions[random.Next(directions.Count)];
+            else return null;
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace Savanna.Logic
         /// <param name="surroundings">Area where position is</param>
         /// <param name="self">Own coordinates in that position</param>
         /// <returns> Bool value showing if direction was valid. </returns>
-        public static bool IsDirectionValid(Direction direction, Animal[,] surroundings, AnimalCoordinates self)
+        public static bool IsDirectionValid(Direction direction, Animal?[,] surroundings, AnimalCoordinates self)
         {
             var movement = Directions[direction];
             int targetRow = self.Row + movement.row;
@@ -76,7 +77,7 @@ namespace Savanna.Logic
         /// <param name="surroundings">Area where position is</param>
         /// <param name="self">Own coordinates in that position</param>
         /// <returns>A list of valid directions</returns>
-        public static List<Direction> GetValidDirections(Animal[,] surroundings, AnimalCoordinates self)
+        public static List<Direction> GetValidDirections(Animal?[,] surroundings, AnimalCoordinates self)
         {
             var allDirections = Enum.GetValues(typeof(Direction)).Cast<Direction>();
             return allDirections.Where(direction => IsDirectionValid(direction, surroundings, self)).ToList();

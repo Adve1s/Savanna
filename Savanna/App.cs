@@ -22,8 +22,10 @@ namespace Savanna
         /// </summary>
         public App()
         {
-            int height = Input.GetValidIntiger(UIConstants.HeightMessage);
-            int width = Input.GetValidIntiger(UIConstants.WidthMessage);
+            //int height = Input.GetValidIntiger(UIConstants.HeightMessage);
+            //int width = Input.GetValidIntiger(UIConstants.WidthMessage);
+            int height = 25;
+            int width = 60;
             _savannaWorld = new World(height,width);
             _display = new Display();
         }

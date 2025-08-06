@@ -22,10 +22,10 @@ namespace Savanna.Logic
         };
 
         /// <summary>
-        /// Gets animal if it exists
+        /// Creates animal if key exists
         /// </summary>
         /// <param name="key">Key to search animal by</param>
-        /// <returns></returns>
+        /// <returns>New animal object</returns>
         public Animal? CreateAnimal(char key) => _creators.ContainsKey(key) ? _creators[key]() : null;
     }
 }
