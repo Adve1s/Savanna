@@ -18,7 +18,7 @@ namespace Savanna.Logic
         private const string DecomposingSymbol = "X";
 
         private Animal?[,] _field;
-        private AnimalFactory _factory;
+        internal AnimalFactory AnimalFactory { get; }
 
         /// <summary>
         /// Gets the field height
@@ -38,7 +38,7 @@ namespace Savanna.Logic
             Height = height;
             Width = width;
             _field = new Animal[Height, Width];
-            _factory = new AnimalFactory();
+            AnimalFactory = new AnimalFactory();
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Savanna.Logic
         /// <param name="column">Column of the animal</param>
         private void AnimalDoActions(int row, int column)
         {
-            AnimalCoordinates animal = new AnimalCoordinates(_field[row, column], row, column);
+            AnimalCoordinates animal = new AnimalCoordinates(row, column, _field[row, column]);
             if (!animal.Animal.IsDecomposed()) animal.Animal.Turn(this, animal);
             else _field[row, column] = null;
         }
@@ -107,26 +107,27 @@ namespace Savanna.Logic
             bool haveEmptySpace = _field.Cast<Object>().Any(field => field == null);
             while (haveEmptySpace)
             {
-                if (_field[randomRow, randomColumn] == null) { break; }
+                if (_field[randomRow, randomColumn] == null) 
+                {
+                    _field[randomRow, randomColumn] = AnimalFactory.CreateAnimal(key);
+                    break; 
+                }
                 randomRow = random.Next(0, Height);
                 randomColumn = random.Next(0, Width);
             }
-            _field[randomRow, randomColumn] = _factory.CreateAnimal(key);
+
         }
 
         /// <summary>
-        /// Add an animal to specific place on board from mother
+        /// Adds animal to specified place
         /// </summary>
-        /// <param name="key">Key by which animal is added</param>
-        /// <param name="mother">Field where is mother at</param>
-        /// <param name="direction">Direction where animal is born</param>
-        internal void AddAnimal(char key, AnimalCoordinates? mother, Direction? direction)
+        /// <param name="animal">animal to add</param>
+        /// <param name="place">place to add animal at</param>
+        internal void AddAnimal(Animal animal, AnimalCoordinates? place)
         {
-            if (mother != null && direction != null)
+            if (place != null && _field[place.Value.Row, place.Value.Column] == null)
             {
-                int targetRow = mother.Value.Row + Movement.Directions[direction.Value].row;
-                int targetColumn = mother.Value.Column + Movement.Directions[direction.Value].column;
-                _field[targetRow, targetColumn] = _factory.CreateAnimal(key); 
+                _field[place.Value.Row,place.Value.Column] = animal; 
             }
 
         }
@@ -134,17 +135,13 @@ namespace Savanna.Logic
         /// <summary>
         /// Moves animal to next position
         /// </summary>
-        /// <param name="row"></param>
-        /// <param name="column"></param>
-        /// <param name="direction"></param>
+        /// <param name="animal">Animal position</param>
+        /// <param name="direction">adirection to move to</param>
         internal void MoveAnimal(AnimalCoordinates animal, Direction direction)
         {
             int targetRow = animal.Row + Movement.Directions[direction].row;
             int targetColumn = animal.Column + Movement.Directions[direction].column;
-            if (targetRow >= 0 && targetRow < Height && targetColumn >= 0 && targetColumn < Width && _field[targetRow, targetColumn] == null)
-            {
-                (_field[animal.Row, animal.Column], _field[targetRow, targetColumn]) = (_field[targetRow, targetColumn], _field[animal.Row, animal.Column]);
-            }
+            (_field[animal.Row, animal.Column], _field[targetRow, targetColumn]) = (_field[targetRow, targetColumn], _field[animal.Row, animal.Column]);
         }
 
         /// <summary>

@@ -18,7 +18,7 @@ namespace Savanna.Logic
         /// <param name="row">The coordinate row</param>
         /// <param name="column">The coordinate column</param>
         /// <returns>Visible area 2d array</returns>
-        internal (Animal[,], AnimalCoordinates) GetVisibleArea(int row, int column)
+        internal (Animal[,] visibleArea, AnimalCoordinates self) GetVisibleArea(int row, int column)
         {
             var animal = _field[row, column];
             (int visibleAreaHeight, int visibleAreaWidth) = GetVisibleDimentions(row, column);
@@ -26,7 +26,7 @@ namespace Savanna.Logic
 
             AnimalCoordinates globalCoordinates = GetGlobalStartVisionAreaCoordinates(animal, row, column);
             int defaultGlobalX = globalCoordinates.Column;
-            var returnCoordinates = new AnimalCoordinates(animal, default, default);
+            var returnCoordinates = new AnimalCoordinates(default, default,animal);
             for (int localY = 0; localY < visibleAreaHeight; localY++)
             {
                 for (int localX = 0; localX < visibleAreaWidth; localX++)
@@ -61,7 +61,7 @@ namespace Savanna.Logic
             else globalRow = row - animal.Vision;
             if (column - animal.Vision < 0) globalColumn = 0;
             else globalColumn = column - animal.Vision;
-            var animalCoordinates = new AnimalCoordinates(animal, globalRow, globalColumn);
+            var animalCoordinates = new AnimalCoordinates(globalRow, globalColumn, animal);
             return animalCoordinates;
         }
 

@@ -20,7 +20,7 @@ namespace Savanna.Logic
             {
                 for (int j = 0; j < surroundings.GetLength(1); j++)
                 {
-                    if (surroundings[i, j] is T && surroundings[i, j].IsAlive()) typeCoordinates.Add(new AnimalCoordinates(surroundings[i, j], i, j));
+                    if (surroundings[i, j] is T && surroundings[i, j].IsAlive()) typeCoordinates.Add(new AnimalCoordinates(i, j, surroundings[i, j]));
                 }
             }
             return typeCoordinates;
@@ -39,7 +39,7 @@ namespace Savanna.Logic
             {
                 for (int j = 0; j < surroundings.GetLength(1); j++)
                 {
-                    if (surroundings[i, j] != null && surroundings[i, j].GetType() == selfType && surroundings[i, j].IsAlive()) typeCoordinates.Add(new AnimalCoordinates(surroundings[i, j], i, j));
+                    if (surroundings[i, j] != null && surroundings[i, j].GetType() == selfType && surroundings[i, j].IsAlive()) typeCoordinates.Add(new AnimalCoordinates(i, j, surroundings[i, j]));
                 }
             }
             return typeCoordinates;
@@ -52,7 +52,7 @@ namespace Savanna.Logic
         /// <param name="self">OwnPosition</param>
         /// <returns>List of available mates</returns>
         internal List<AnimalCoordinates> FilterCloseEnoughMates(List<AnimalCoordinates> visibleMates, AnimalCoordinates self)
-            => visibleMates.Where(animal => DistanceToCalculator(self, animal) <= animal.Animal.ReproductionRange).ToList();
+            => visibleMates.Where(animal => DistanceToCalculator(self, animal) <= self.Animal.ReproductionRange).ToList();
 
         /// <summary>
         /// Calculates distance from one field to other
@@ -83,7 +83,7 @@ namespace Savanna.Logic
         /// <param name="stamina">Current stamina</param>
         /// <param name="staminaChange">Stamina change</param>
         /// <returns>Bool value answering if have enough stamina</returns>
-        protected bool HaveEnoughStamina(double stamina, double staminaChange) => stamina + staminaChange >= 0;
+        internal bool HaveEnoughStamina(double stamina, double staminaChange) => stamina + staminaChange >= 0;
 
         /// <summary>
         /// Checks if gain would put value above max
@@ -92,6 +92,6 @@ namespace Savanna.Logic
         /// <param name="currentValue">Current value to add to</param>
         /// <param name="gain">Gain to add to current value</param>
         /// <returns>Bool value answering if stat is above max</returns>
-        protected bool IsStatAboveMax(double maxValue, double currentValue, double gain) => currentValue + gain > maxValue;
+        internal bool IsStatAboveMax(double maxValue, double currentValue, double gain) => currentValue + gain > maxValue;
     }
 }
