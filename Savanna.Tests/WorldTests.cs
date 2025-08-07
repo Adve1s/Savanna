@@ -43,7 +43,8 @@ namespace Savanna.Tests
             var world = new World();
             world.AddAnimal(new Antelope(),new AnimalCoordinates(1,0));
             var field = world.GetField();
-            field[1, 0]._roundsDead = field[1,0].RoundsToDecompose;
+            //field[1, 0]._isAlive = false;
+            //field[1, 0]._roundsDead = int.MaxValue;
 
             world.NextTurn();
 

@@ -9,7 +9,7 @@ namespace Savanna.Logic
     /// <summary>
     /// Lists all possible movement directions.
     /// </summary>
-    internal enum Direction
+    public enum Direction
     {
         North,
         NorthEast,
@@ -24,7 +24,7 @@ namespace Savanna.Logic
     /// <summary>
     /// Saves all posible movement directions.
     /// </summary>
-    internal static class Movement
+    public static class Movement
     {
         /// <summary>
         /// Accesable Directions with its movement values

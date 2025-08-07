@@ -78,7 +78,15 @@ namespace Savanna.Logic
             animalIdList = animalIdList.OrderBy(x => random.Next()).ToList();
             foreach ((int row, int column) in animalIdList)
             {
-                AnimalDoActions(row, column);
+                try
+                {
+                    AnimalDoActions(row, column);
+                }
+                catch (Exception ex)
+                {
+                    _field[row, column] = null;
+                    Console.WriteLine(string.Format(ErrorMessages.ANIMAL_CRASHED_MESSAGE, row, column,ex.Message));
+                }
             }
 
         }
@@ -107,10 +115,10 @@ namespace Savanna.Logic
             bool haveEmptySpace = _field.Cast<Object>().Any(field => field == null);
             while (haveEmptySpace)
             {
-                if (_field[randomRow, randomColumn] == null) 
+                if (_field[randomRow, randomColumn] == null)
                 {
                     _field[randomRow, randomColumn] = AnimalFactory.CreateAnimal(key);
-                    break; 
+                    break;
                 }
                 randomRow = random.Next(0, Height);
                 randomColumn = random.Next(0, Width);
@@ -127,7 +135,7 @@ namespace Savanna.Logic
         {
             if (place != null && _field[place.Value.Row, place.Value.Column] == null)
             {
-                _field[place.Value.Row,place.Value.Column] = animal; 
+                _field[place.Value.Row, place.Value.Column] = animal;
             }
 
         }
@@ -148,6 +156,6 @@ namespace Savanna.Logic
         /// Gets field
         /// </summary>
         /// <returns>Field</returns>
-        internal Animal?[,] GetField() => _field;
+        public Animal?[,] GetField() => _field;
     }
 }

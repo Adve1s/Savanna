@@ -12,14 +12,14 @@ namespace Savanna.Logic
     /// </summary>
     internal class AnimalFactory
     {
-        /// <summary>
-        /// Dictatory with all animal creators saved
-        /// </summary>
-        private Dictionary<char, Func<Animal>> _creators = new Dictionary<char, Func<Animal>>()
+        private Dictionary<char, Func<Animal>> _creators = new Dictionary<char, Func<Animal>>();
+
+        public AnimalFactory()
         {
-            {'A', () => new Antelope() },
-            {'L', () => new Lion() }
-        };
+            var pluginManager = new PluginManager();
+            _creators = pluginManager.MakeCreationDictatoryFromPlugins();
+        }
+
 
         /// <summary>
         /// Creates animal if key exists

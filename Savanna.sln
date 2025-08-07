@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Savanna.Logic", "Savanna.Lo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Savanna.Tests", "Savanna.Tests\Savanna.Tests.csproj", "{F5FC18BE-F44E-42CA-BA06-F7F95BE80EF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LionPlugin", "LionPlugin\LionPlugin.csproj", "{DDA784BC-D9A9-4F2A-8727-C70DF5C04227}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AntelopePlugin", "AntelopePlugin\AntelopePlugin.csproj", "{5B398B7B-C79D-47E8-B524-EB51B35A4336}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{F5FC18BE-F44E-42CA-BA06-F7F95BE80EF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5FC18BE-F44E-42CA-BA06-F7F95BE80EF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5FC18BE-F44E-42CA-BA06-F7F95BE80EF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDA784BC-D9A9-4F2A-8727-C70DF5C04227}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDA784BC-D9A9-4F2A-8727-C70DF5C04227}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDA784BC-D9A9-4F2A-8727-C70DF5C04227}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDA784BC-D9A9-4F2A-8727-C70DF5C04227}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
