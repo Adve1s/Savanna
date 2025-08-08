@@ -8,8 +8,9 @@ namespace Savanna.Tests
         [TestMethod]
         public void CreateAnimal_WhenExists_ReturnNewAnimal()
         {
-            var animalFactory = new AnimalFactory();
-            var key = new Antelope().CreationKey;
+            var pluginManager = new PluginManager(Directory.GetCurrentDirectory(), path => new[] { "oneFile.dll" }, file => typeof(TestAnimal).Assembly);
+            var animalFactory = new AnimalFactory(pluginManager);
+            var key = new TestAnimal().CreationKey;
             var animal = animalFactory.CreateAnimal(key);
             Assert.IsInstanceOfType<Animal>(animal);
         }

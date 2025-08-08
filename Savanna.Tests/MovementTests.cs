@@ -15,9 +15,9 @@ namespace Savanna.Tests
             if (fillers != null)
                 foreach (var coords in fillers)
                 {
-                    field[coords.row, coords.column] = new Antelope();
+                    field[coords.row, coords.column] = new TestAnimal();
                 }
-            var mainAnimal = new Antelope();
+            var mainAnimal = new TestAnimal();
             field[mainCoords.row, mainCoords.column] = mainAnimal;
             var coordinates = new AnimalCoordinates(mainCoords.row, mainCoords.column, mainAnimal);
             return (field, coordinates);

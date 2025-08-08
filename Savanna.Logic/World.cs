@@ -42,6 +42,18 @@ namespace Savanna.Logic
         }
 
         /// <summary>
+        /// Constructor for tests
+        /// </summary>
+        /// <param name="animalFactory">Animal factory injection</param>
+        internal World(AnimalFactory animalFactory, int height = 15, int width = 10)
+        {
+            Height = height;
+            Width = width;
+            _field = new Animal[Height, Width];
+            AnimalFactory = animalFactory;
+        }
+
+        /// <summary>
         /// Gets the current field state
         /// </summary>
         /// <returns> Current field state in PositonOccupancy 2d array format</returns>

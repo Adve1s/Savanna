@@ -12,7 +12,7 @@ namespace Savanna.Logic
         private const string PLUGIN_DIRECTORY = "plugins";
         private const string PLUGIN_EXTENTION = "*.dll";
 
-        private readonly string _pluginPath;
+        public readonly string _pluginPath;
         private readonly Func<string, string[]> _getFiles;
         private readonly Func<string, Assembly> _loadAssembly;
 
@@ -60,7 +60,7 @@ namespace Savanna.Logic
             var assemblies = new List<Assembly>();
             try
             {
-                Directory.Exists(_pluginPath);
+                if (!Directory.Exists(_pluginPath)) throw new Exception(ErrorMessages.PATH_EXIST_FAILED_MESSAGE);
             }
             catch (Exception ex)
             {
@@ -79,7 +79,7 @@ namespace Savanna.Logic
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(string.Format(ErrorMessages.FILE_LOAD_FAILED_MESSAGE, ex.Message));
+                    Console.WriteLine(string.Format(ErrorMessages.FILE_LOAD_FAILED_MESSAGE, file, ex.Message));
                 }
             }
             return assemblies;

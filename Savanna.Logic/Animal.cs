@@ -40,11 +40,11 @@
         protected abstract (double StaminaChange, int Weight) SleepInfo { get; }
         protected abstract (double StaminaChange, int Weight) MoveInfo { get; }
 
-        private bool _isAlive = true;
-        private int _roundsDead = 0;
-        private double _age = 0;
-        private double _currentChildrenPause = 0;
-        private Dictionary<Animal, int> _possibleMates = new Dictionary<Animal, int>();
+        protected bool _isAlive = true;
+        protected int _roundsDead = 0;
+        protected double _age = 0;
+        protected double _currentChildrenPause = 0;
+        protected Dictionary<Animal, int> _possibleMates = new Dictionary<Animal, int>();
 
         /// <summary>
         /// Gets animal current stamina
@@ -227,7 +227,7 @@
         /// <param name="visibleArea">Area animal sees</param>
         /// <param name="selfLocaly">Self local coordinates</param>
         /// <param name="selfGlobaly">Self global coordinates</param>
-        private void Mating(World world, Animal?[,] visibleArea, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly)
+        protected void Mating(World world, Animal?[,] visibleArea, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly)
         {
             if (_age < ChildrenBearingAge || _currentChildrenPause < ChildrenPauseTime) return;
             visibleArea[selfLocaly.Row, selfLocaly.Column] = null;

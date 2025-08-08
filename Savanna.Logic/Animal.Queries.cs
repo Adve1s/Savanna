@@ -32,7 +32,7 @@ namespace Savanna.Logic
         /// <param name="visibleMates">All mates within visible area</param>
         /// <param name="self">OwnPosition</param>
         /// <returns>List of available mates</returns>
-        private List<AnimalCoordinates> FilterCloseEnoughMates(List<AnimalCoordinates> visibleMates, AnimalCoordinates self)
+        protected List<AnimalCoordinates> FilterCloseEnoughMates(List<AnimalCoordinates> visibleMates, AnimalCoordinates self)
             => visibleMates.Where(animal => DistanceToCalculator(self, animal) <= self.Animal.ReproductionRange).ToList();
 
         /// <summary>
@@ -73,6 +73,6 @@ namespace Savanna.Logic
         /// <param name="currentValue">Current value to add to</param>
         /// <param name="gain">Gain to add to current value</param>
         /// <returns>Bool value answering if stat is above max</returns>
-        private bool IsStatAboveMax(double maxValue, double currentValue, double gain) => currentValue + gain > maxValue;
+        protected bool IsStatAboveMax(double maxValue, double currentValue, double gain) => currentValue + gain > maxValue;
     }
 }
