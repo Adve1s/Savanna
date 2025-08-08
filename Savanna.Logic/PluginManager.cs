@@ -11,58 +11,95 @@ namespace Savanna.Logic
     {
         private const string PLUGIN_DIRECTORY = "plugins";
         private const string PLUGIN_EXTENTION = "*.dll";
-        private const int PLUGIN_WORLD_TURN_GENERATION_COUNT = 1000;
 
-        private static readonly string pluginPath = Path.Combine(Directory.GetCurrentDirectory(), PLUGIN_DIRECTORY);
-        private static readonly string[]? pluginFiles = Directory.GetFiles(pluginPath, PLUGIN_EXTENTION);
+        private readonly string _pluginPath;
+        private readonly Func<string, string[]> _getFiles;
+        private readonly Func<string, Assembly> _loadAssembly;
+
+        /// <summary>
+        /// Creates instance of PluginManager
+        /// </summary>
+        /// <param name="pluginPath">path to use</param>
+        /// <param name="getFiles">Function to use to get files</param>
+        /// <param name="loadAssembly">function to use to get assemblies</param>
+        public PluginManager(string pluginPath = null, Func<string, string[]> getFiles = null, Func<string, Assembly> loadAssembly = null)
+        {
+            _pluginPath = pluginPath ?? Path.Combine(Directory.GetCurrentDirectory(), PLUGIN_DIRECTORY);
+            _getFiles = getFiles ?? ((path) => Directory.GetFiles(path, PLUGIN_EXTENTION));
+            _loadAssembly = loadAssembly ?? ((file) => Assembly.LoadFrom(file));
+        }
 
         /// <summary>
         /// Creates creation dictatory for plugins
         /// </summary>
         /// <returns>Dictatory with key : animal pairs</returns>
-        public Dictionary<char, Func<Animal>> MakeCreationDictatoryFromPlugins()
+        public Dictionary<char, Func<Animal>> LoadAndValidatePlugins()
         {
-            var dictatory = new Dictionary<char, Func<Animal>>();
+            var creators = new Dictionary<char, Func<Animal>>();
+
+            foreach (var assembly in LoadAssemblies())
+            {
+                foreach (var anmialType in GetAnimalTypes(assembly))
+                {
+                    if(ValidateAnimal(anmialType, creators))
+                    {
+                        RegisterAnimal(anmialType, creators);
+                    }
+                }
+
+            }
+            return creators;
+        }
+
+        /// <summary>
+        /// Loads assemblies from _pluginPath
+        /// </summary>
+        /// <returns>List of assemblies</returns>
+        private List<Assembly> LoadAssemblies()
+        {
+            var assemblies = new List<Assembly>();
             try
             {
-                Directory.Exists(pluginPath);
+                Directory.Exists(_pluginPath);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(string.Format(ErrorMessages.PATH_FAILED_MESSAGE, ex.Message));
-                return dictatory;
+                return assemblies;
             }
 
-            foreach (var file in pluginFiles)
+            var files = _getFiles(_pluginPath) ?? Array.Empty<string>();
+
+            foreach (var file in files)
             {
-                HandleAndValidateFile(file, ref dictatory);
+                try
+                {
+                    var assembly = _loadAssembly(file);
+                    assemblies.Add(assembly);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(string.Format(ErrorMessages.FILE_LOAD_FAILED_MESSAGE, ex.Message));
+                }
             }
-            return dictatory;
+            return assemblies;
         }
 
         /// <summary>
-        /// Handles loading file and parsing its data
+        /// Gets Animal types saved in assembly
         /// </summary>
-        /// <param name="file">File to handle</param>
-        /// <param name="dictatory">Dictatory to save result at.</param>
-        private void HandleAndValidateFile(string? file, ref Dictionary<char, Func<Animal>> dictatory)
+        /// <param name="assembly">The assembly to get types from</param>
+        /// <returns>Enumerable of gotten types</returns>
+        private IEnumerable<Type> GetAnimalTypes(Assembly assembly)
         {
             try
             {
-                var assembly = Assembly.LoadFrom(file);
-                var animalTypes = assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Animal)) && !type.IsAbstract && type.IsPublic);
-                foreach (var animalType in animalTypes)
-                {
-                    if(ValidateAnimal(animalType, dictatory))
-                    {
-                        var instance = (Animal)Activator.CreateInstance(animalType);
-                        dictatory[instance.CreationKey] = () => (Animal)Activator.CreateInstance(animalType);
-                    }
-                }
-            }
+                return assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Animal)) && !type.IsAbstract && type.IsPublic);
+            } 
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(ErrorMessages.FILE_LOAD_FAILED_MESSAGE, file, ex.Message));
+                Console.WriteLine(string.Format(ErrorMessages.TYPE_LOAD_FAILED_MESSAGE,assembly.GetName().Name, ex.Message));
+                return Enumerable.Empty<Type>();
             }
         }
 
@@ -71,7 +108,7 @@ namespace Savanna.Logic
         /// </summary>
         /// <param name="animalType">Animal type to create.</param>
         /// <param name="dictatory">Dictatory where key : instance pair would be saved</param>
-        /// <exception cref="Exception">Creation key already exists</exception>
+        /// <returns>Bool if animal was valid.</returns>
         private bool ValidateAnimal(Type? animalType, Dictionary<char, Func<Animal>> dictatory)
         {
             try
@@ -83,9 +120,21 @@ namespace Savanna.Logic
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(ErrorMessages.ANIMAL_ADDITION_FAILED_MESSAGE,animalType, ex.Message));
+                Console.WriteLine(string.Format(ErrorMessages.ANIMAL_ADDITION_FAILED_MESSAGE, animalType, ex.Message));
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Registers animal in the dicctatory
+        /// </summary>
+        /// <param name="animalType">Animal to register</param>
+        /// <param name="dictatory">Dictatory where it is saved</param>
+        private void RegisterAnimal(Type? animalType, Dictionary<char, Func<Animal>> dictatory)
+        {
+            var instance = (Animal)Activator.CreateInstance(animalType);
+            char key = instance.CreationKey;
+            dictatory[key] = () => (Animal)Activator.CreateInstance(animalType);
         }
     }
 }

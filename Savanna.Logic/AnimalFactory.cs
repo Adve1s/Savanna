@@ -14,12 +14,11 @@ namespace Savanna.Logic
     {
         private Dictionary<char, Func<Animal>> _creators = new Dictionary<char, Func<Animal>>();
 
-        public AnimalFactory()
+        public AnimalFactory(PluginManager pluginManager = null)
         {
-            var pluginManager = new PluginManager();
-            _creators = pluginManager.MakeCreationDictatoryFromPlugins();
+            var usedManager = pluginManager ?? new PluginManager();
+            _creators = usedManager.LoadAndValidatePlugins();
         }
-
 
         /// <summary>
         /// Creates animal if key exists
