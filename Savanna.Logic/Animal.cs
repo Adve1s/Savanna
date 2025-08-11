@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace Savanna.Logic
+﻿namespace Savanna.Logic
 {
     /// <summary>
     /// Represents a single animal in Savanna,
     /// manages Animal decition making.
     /// </summary>
-    internal abstract partial class Animal
+    public abstract partial class Animal
     {
         // Constants
         protected const double DEFAULT_MAX_STAMINA = 25;
@@ -20,43 +12,44 @@ namespace Savanna.Logic
         protected const double REST_STAMINA_RECOVERY = 2.5;
         protected const double DEFAULT_ACTION_STAMINA_COST = 25;
         protected const double SLEEP_STAMINA_RECOVERY_PRECENTAGE = 0.75;
-        internal const int ROUNDS_TO_REPRODUCE = 3;
-        internal const double TIME_PER_ROUND = 0.01;
+        protected const int ROUNDS_TO_REPRODUCE = 3;
+        protected const double TIME_PER_ROUND = 0.01;
 
         // Animal settings used
+        public abstract string Name { get; }
         public abstract string DisplaySymbol { get; }
         public abstract char CreationKey { get; }
         protected abstract int DefaultSpeed { get; }
         protected abstract int DefaultVision { get; }
         protected abstract int DefaultEndurance { get; }
         protected abstract int DefaultDefence { get; }
-        
+
         protected abstract double MaxStamina { get; }
         protected abstract double MaxHealth { get; }
 
-        internal abstract int RoundsToDecompose { get; }
+        protected abstract int RoundsToDecompose { get; }
         protected abstract double PerRoundHealthDeduction { get; }
         protected abstract double TiredStaminaThreshold { get; }
-        public abstract int ReproductionRange { get; }
-        internal abstract double MaxAgeLimit { get; }
-        internal abstract double ChildrenBearingAge { get; }
-        internal abstract double ChildrenPauseTime { get; }
+        protected abstract int ReproductionRange { get; }
+        protected abstract double MaxAgeLimit { get; }
+        protected abstract double ChildrenBearingAge { get; }
+        protected abstract double ChildrenPauseTime { get; }
         protected abstract double HungryThreshold { get; }
 
-        protected abstract (double StaminaChange, int Weight) RestInfo {  get; }
-        protected abstract (double StaminaChange, int Weight) SleepInfo {  get; }
-        protected abstract (double StaminaChange, int Weight) MoveInfo {  get; }
+        protected abstract (double StaminaChange, int Weight) RestInfo { get; }
+        protected abstract (double StaminaChange, int Weight) SleepInfo { get; }
+        protected abstract (double StaminaChange, int Weight) MoveInfo { get; }
 
-        internal bool _isAlive = true;
-        internal int _roundsDead = 0;
-        internal double _age = 0;
-        internal double _currentChildrenPause = 0;
-        internal Dictionary<Animal,int> possibleMates = new Dictionary<Animal,int>();
+        protected bool _isAlive = true;
+        protected int _roundsDead = 0;
+        protected double _age = 0;
+        protected double _currentChildrenPause = 0;
+        protected Dictionary<Animal, int> _possibleMates = new Dictionary<Animal, int>();
 
         /// <summary>
         /// Gets animal current stamina
         /// </summary>
-        public double Stamina { get; internal set; }
+        public double Stamina { get; protected set; }
 
         /// <summary>
         /// Gets Animal current Health
@@ -94,8 +87,8 @@ namespace Savanna.Logic
             if (selfGlobaly.Animal.IsAlive())
             {
                 (Animal[,] visibleArea, AnimalCoordinates selfLocaly) = world.GetVisibleArea(selfGlobaly.Row, selfGlobaly.Column);
-                Mating(world,visibleArea, selfLocaly,selfGlobaly);
-                DoAction(world,visibleArea,selfLocaly,selfGlobaly);
+                Mating(world, visibleArea, selfLocaly, selfGlobaly);
+                DoAction(world, visibleArea, selfLocaly, selfGlobaly);
             }
         }
 
@@ -106,12 +99,12 @@ namespace Savanna.Logic
         /// <param name="surroundings">Surroundings within vision range</param>
         /// <param name="selfLocaly">Own position within vision range</param>
         /// <param name="selfGlobaly">Own position within world</param>
-        internal abstract void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly);
+        protected abstract void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly);
 
         /// <summary>
         /// Per round Animal updates.
         /// </summary>
-        internal void PerRoundUpdate()
+        protected void PerRoundUpdate()
         {
             if (_isAlive)
             {
@@ -126,31 +119,23 @@ namespace Savanna.Logic
         /// <summary>
         /// Animal decides to do nothing
         /// </summary>
-        internal void Rest()
-        {
-            if (IsStatAboveMax(MaxStamina, Stamina, RestInfo.StaminaChange)) Stamina = MaxStamina;
-            else Stamina += RestInfo.StaminaChange;
-        }
+        protected void Rest() => ChangeStamina(RestInfo.StaminaChange);
 
         /// <summary>
         /// Animal decides to sleep
         /// </summary>
-        internal void Sleep()
-        {
-            if (IsStatAboveMax(MaxStamina,Stamina,SleepInfo.StaminaChange)) Stamina = MaxStamina;
-            else Stamina += SleepInfo.StaminaChange;
-        }
+        protected void Sleep() => ChangeStamina(SleepInfo.StaminaChange);
 
         /// <summary>
         /// Animal dies
         /// </summary>
-        private void Die() => _isAlive = false;
+        protected void Die() => _isAlive = false;
 
         /// <summary>
         /// Animal gets damaged
         /// </summary>
         /// <param name="damageDone">Damage ammount</param>
-        internal void Damage(double damageDone)
+        public void Damage(double damageDone)
         {
             Health -= damageDone;
             if (Health <= 0) Die();
@@ -160,10 +145,20 @@ namespace Savanna.Logic
         /// Animal gets healed
         /// </summary>
         /// <param name="damageHealed">Heal ammount</param>
-        internal void Heal(double damageHealed)
+        protected void Heal(double damageHealed)
         {
             if (IsStatAboveMax(MaxHealth, Health, damageHealed)) Health = MaxHealth;
             else Health += damageHealed;
+        }
+
+        /// <summary>
+        /// Animal stamina gets changes
+        /// </summary>
+        /// <param name="staminaChange">Amount of change</param>
+        protected void ChangeStamina(double staminaChange)
+        {
+            if (IsStatAboveMax(MaxStamina, Stamina, staminaChange)) Stamina = MaxStamina; 
+            else Stamina += staminaChange;
         }
 
         /// <summary>
@@ -172,11 +167,11 @@ namespace Savanna.Logic
         /// <param name="world">World where animal is</param>
         /// <param name="self">Own position in world</param>
         /// <param name="direction">Direction where animal wants to move</param>
-        internal void Move(World world, AnimalCoordinates self, Direction? direction)
+        protected void Move(World world, AnimalCoordinates self, Direction? direction)
         {
             if (HaveEnoughStamina(self.Animal.Stamina, MoveInfo.StaminaChange) && direction != null)
             {
-                Stamina += MoveInfo.StaminaChange;
+                ChangeStamina(MoveInfo.StaminaChange);
                 world.MoveAnimal(self, (Direction)direction);
             }
             else Rest();
@@ -192,7 +187,7 @@ namespace Savanna.Logic
             var direction = Movement.RandomDirection(Movement.GetValidDirections(world.GetField(), self));
             if (direction != null) world.AddAnimal(world.AnimalFactory.CreateAnimal(CreationKey),
                 new AnimalCoordinates(self.Row + Movement.Directions[(Direction)direction].row, self.Column + Movement.Directions[(Direction)direction].column));
-            possibleMates.Clear();
+            _possibleMates.Clear();
             _currentChildrenPause = 0;
         }
 
@@ -204,8 +199,8 @@ namespace Savanna.Logic
         /// <param name="enemies">Positions of enemies within vision range</param>
         /// <param name="allies">Positions of allies within vision range</param>
         /// <returns>Direction where animal chose to go</returns>
-        internal abstract Direction? DecideMoveDirection(AnimalCoordinates self, Animal[,] surroundings, List<AnimalCoordinates>? enemies = null, List<AnimalCoordinates>? allies = null);
-    
+        protected abstract Direction? DecideMoveDirection(AnimalCoordinates self, Animal[,] surroundings, List<AnimalCoordinates>? enemies = null, List<AnimalCoordinates>? allies = null);
+
         /// <summary>
         /// Animal chooses random action to do
         /// </summary>
@@ -232,25 +227,25 @@ namespace Savanna.Logic
         /// <param name="visibleArea">Area animal sees</param>
         /// <param name="selfLocaly">Self local coordinates</param>
         /// <param name="selfGlobaly">Self global coordinates</param>
-        internal void Mating(World world, Animal?[,] visibleArea, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly)
+        protected void Mating(World world, Animal?[,] visibleArea, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly)
         {
             if (_age < ChildrenBearingAge || _currentChildrenPause < ChildrenPauseTime) return;
             visibleArea[selfLocaly.Row, selfLocaly.Column] = null;
-            var mates = GetMatesVisibleList(visibleArea, GetType());
+            var mates = GetAnimalByName(visibleArea, Name);
             mates = FilterCloseEnoughMates(mates, selfLocaly);
             var closeMates = mates.Select(animal => animal.Animal).ToHashSet();
             foreach (var animal in closeMates)
             {
-                possibleMates[animal] = possibleMates.GetValueOrDefault(animal, 0) + 1;
-                if (possibleMates[animal] >= ROUNDS_TO_REPRODUCE && animal.possibleMates.ContainsKey(this) && animal.possibleMates[this] >= ROUNDS_TO_REPRODUCE)
+                _possibleMates[animal] = _possibleMates.GetValueOrDefault(animal, 0) + 1;
+                if (_possibleMates[animal] >= ROUNDS_TO_REPRODUCE && animal._possibleMates.ContainsKey(this) && animal._possibleMates[this] >= ROUNDS_TO_REPRODUCE)
                 {
-                    Mate(world,selfGlobaly);
+                    Mate(world, selfGlobaly);
                     return;
                 }
             }
-            foreach (var key in possibleMates.Keys.ToList())
+            foreach (var key in _possibleMates.Keys.ToList())
             {
-                if (!closeMates.Contains(key)) possibleMates.Remove(key);
+                if (!closeMates.Contains(key)) _possibleMates.Remove(key);
             }
         }
     }

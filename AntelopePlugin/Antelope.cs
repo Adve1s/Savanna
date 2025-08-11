@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using static Savanna.Logic.Lion;
+﻿using Savanna.Logic;
 
-namespace Savanna.Logic
+namespace AntelopePlugin
 {
     /// <summary>
     /// Represents a specific type of <see cref="Animal"/> - Antelope,
     /// manages Antelope specific decision making.
     /// </summary>
-    internal class Antelope : Animal
+    public class Antelope : Animal
     {
         // Antelope settings as constants
+        private const string ANTELOPE_NAME = "Antelope";
         private const string ANTELOPE_DISPLAY_SYMBOL = "A";
         private const char ANTELOPE_CREATION_KEY = 'A';
         private const int ANTELOPE_DEFAULT_SPEED = 3;
@@ -40,7 +34,10 @@ namespace Savanna.Logic
         private const double EAT_GRASS_ACTION_COST_MULTIPLIER = 0.2;
         private const double EAT_GRASS_HEALTH_GAIN_PRECENTAGE = 0.1;
 
+        private const string LION_NAME = "Lion";
+
         // Animal settings used
+        public override string Name => ANTELOPE_NAME;
         public override string DisplaySymbol => ANTELOPE_DISPLAY_SYMBOL;
         public override char CreationKey => ANTELOPE_CREATION_KEY;
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
@@ -51,13 +48,13 @@ namespace Savanna.Logic
         protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
         protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
 
-        internal override int RoundsToDecompose => ANTELOPE_ROUNDS_TO_DECOMPOSE;
+        protected override int RoundsToDecompose => ANTELOPE_ROUNDS_TO_DECOMPOSE;
         protected override double PerRoundHealthDeduction => ANTELOPE_HEALTH_DEDUCTION;
         protected override double TiredStaminaThreshold => MaxStamina * ANTELOPE_TIRED_PRECENTAGE;
-        public override int ReproductionRange => ANTELOPE_REPRODUCTION_RANGE;
-        internal override double MaxAgeLimit => ANTELOPE_MAX_AGE;
-        internal override double ChildrenBearingAge => ANTELOPE_CHILDREN_BEARING_AGE;
-        internal override double ChildrenPauseTime => ANTELOPE_CHILDREN_PAUSE_TIME;
+        protected override int ReproductionRange => ANTELOPE_REPRODUCTION_RANGE;
+        protected override double MaxAgeLimit => ANTELOPE_MAX_AGE;
+        protected override double ChildrenBearingAge => ANTELOPE_CHILDREN_BEARING_AGE;
+        protected override double ChildrenPauseTime => ANTELOPE_CHILDREN_PAUSE_TIME;
         protected override double HungryThreshold => MaxHealth * ANTELOPE_HUNGRY_PRECENTAGE;
 
         protected override (double StaminaChange, int Weight) RestInfo => (REST_STAMINA_RECOVERY * Endurance, REST_POSIBILITY_WEIGHT);
@@ -85,10 +82,10 @@ namespace Savanna.Logic
         /// <param name="surroundings">Surroundings within vision range</param>
         /// <param name="selfLocal">Own position within vision range</param>
         /// <param name="selfGlobal">Own position within world</param>
-        internal override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
+        protected override void DoAction(World world, Animal[,] surroundings, AnimalCoordinates selfLocal, AnimalCoordinates selfGlobal)
         {
             surroundings[selfLocal.Row, selfLocal.Column] = null;
-            var lionPositions = GetTypePositionsList<Lion>(surroundings);
+            var lionPositions = GetAnimalByName(surroundings, LION_NAME);
             var actions = new List<(Action, int)>();
             if (lionPositions.Count() > 0)
             {
@@ -128,7 +125,7 @@ namespace Savanna.Logic
         /// <param name="enemies">Positions of enemies within vision range</param>
         /// <param name="allies">Positions of allies within vision range</param>
         /// <returns>Direction where animal chose to go</returns>
-        internal override Direction? DecideMoveDirection(AnimalCoordinates self, Animal[,] surroundings, List<AnimalCoordinates>? enemies = null, List<AnimalCoordinates>? allies = null)
+        protected override Direction? DecideMoveDirection(AnimalCoordinates self, Animal[,] surroundings, List<AnimalCoordinates>? enemies = null, List<AnimalCoordinates>? allies = null)
         {
             var directions = Movement.GetValidDirections(surroundings, self);
             if (directions.Count() == 0) return null;
@@ -145,7 +142,7 @@ namespace Savanna.Logic
         /// <param name="self">own position</param>
         /// <param name="lions">all visible lion positions</param>
         /// <returns>AnimalCoordinates of closest lion.</returns>
-        internal AnimalCoordinates GetClosestLion(AnimalCoordinates self, List<AnimalCoordinates> lions)
+        protected AnimalCoordinates GetClosestLion(AnimalCoordinates self, List<AnimalCoordinates> lions)
         {
             var random = new Random();
             double closestEnemies = lions
@@ -164,7 +161,7 @@ namespace Savanna.Logic
         /// <param name="self">Own position</param>
         /// <param name="lion">Lion position</param>
         /// <returns>List of all equally good directions.</returns>
-        internal List<Direction> GetFurthestDirectionFromLion(List<Direction> directions, AnimalCoordinates self, AnimalCoordinates lion)
+        protected List<Direction> GetFurthestDirectionFromLion(List<Direction> directions, AnimalCoordinates self, AnimalCoordinates lion)
         {
             var directionWithDistanceToEnemy = directions.Select(direction => new
             {
@@ -185,7 +182,7 @@ namespace Savanna.Logic
         /// <summary>
         /// Antelope decides to stop to eat
         /// </summary>
-        internal void EatGrass()
+        protected void EatGrass()
         {
             if (HaveEnoughStamina(Stamina, EatGrassInfo.StaminaChange))
             {
