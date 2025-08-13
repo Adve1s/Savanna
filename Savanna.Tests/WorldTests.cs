@@ -5,7 +5,8 @@ namespace Savanna.Tests
     [TestClass]
     public sealed class WorldTests
     {
-        private static AnimalFactory _animalFactory = new AnimalFactory();
+        private static PluginManager pluginManager = new PluginManager(Directory.GetCurrentDirectory(), path => new[] { "oneFile.dll" }, file => typeof(TestAnimal).Assembly);
+        private static AnimalFactory _animalFactory = new AnimalFactory(pluginManager);
         #region Core World Methods
         [TestMethod]
         public void NextTurn_WhenNoAnimalExists_DoesntCrash()

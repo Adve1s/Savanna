@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Savanna.Logic
+﻿namespace Savanna.Logic
 {
     /// <summary>
     /// Represents one instance of Savanna world simulation,
@@ -15,7 +6,7 @@ namespace Savanna.Logic
     /// </summary>
     public partial class World
     {
-        private const string DecomposingSymbol = "X";
+        private const char DecomposingSymbol = 'X';
 
         private Animal?[,] _field;
         internal AnimalFactory AnimalFactory { get; }
@@ -57,15 +48,15 @@ namespace Savanna.Logic
         /// Gets the current field state
         /// </summary>
         /// <returns> Current field state in PositonOccupancy 2d array format</returns>
-        public string[,] GetSavannaField()
+        public char[,] GetCharField()
         {
-            var returnField = new string[Height, Width];
+            var returnField = new char[Height, Width];
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
                     if (_field[i, j] != null)
-                        if (_field[i, j].IsAlive()) returnField[i, j] = _field[i, j].DisplaySymbol;
+                        if (_field[i, j].IsAlive()) returnField[i, j] = _field[i, j].DisplayChar;
                         else returnField[i, j] = DecomposingSymbol;
                 }
             }
@@ -97,7 +88,7 @@ namespace Savanna.Logic
                 catch (Exception ex)
                 {
                     _field[row, column] = null;
-                    Console.WriteLine(string.Format(ErrorMessages.ANIMAL_CRASHED_MESSAGE, row, column,ex.Message));
+                    Console.WriteLine(string.Format(ErrorMessages.ANIMAL_CRASHED_MESSAGE, row, column, ex.Message));
                 }
             }
 
@@ -129,7 +120,11 @@ namespace Savanna.Logic
             {
                 if (_field[randomRow, randomColumn] == null)
                 {
-                    _field[randomRow, randomColumn] = AnimalFactory.CreateAnimal(key);
+                    Animal animal = AnimalFactory.CreateAnimal(key);
+                    if (animal != null)
+                    {
+                        _field[randomRow, randomColumn] = animal;
+                    }
                     break;
                 }
                 randomRow = random.Next(0, Height);
@@ -169,5 +164,21 @@ namespace Savanna.Logic
         /// </summary>
         /// <returns>Field</returns>
         public Animal?[,] GetField() => _field;
+
+        /// <summary>
+        /// Get info of available animals.
+        /// </summary>
+        /// <returns>List of animal info objects</returns>
+        public (string Name,char CreationKey)[] GetAvailableAnimalInfo()
+        {
+            var keys = AnimalFactory.GetAvailableKeys();
+            var values = new (string,char)[keys.Length];
+            for (int keyId = 0; keyId < keys.Length; keyId++)
+            {
+                var animal = AnimalFactory.CreateAnimal(keys[keyId]);
+                values[keyId] = (animal.Name, animal.CreationKey);
+            }
+            return values;
+        }
     }
 }

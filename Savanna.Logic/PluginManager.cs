@@ -11,6 +11,7 @@ namespace Savanna.Logic
     {
         private const string PLUGIN_DIRECTORY = "plugins";
         private const string PLUGIN_EXTENTION = "*.dll";
+        private const string SOLUTION_EXTENTION = "*.sln";
 
         public readonly string _pluginPath;
         private readonly Func<string, string[]> _getFiles;
@@ -24,7 +25,7 @@ namespace Savanna.Logic
         /// <param name="loadAssembly">function to use to get assemblies</param>
         public PluginManager(string pluginPath = null, Func<string, string[]> getFiles = null, Func<string, Assembly> loadAssembly = null)
         {
-            _pluginPath = pluginPath ?? Path.Combine(Directory.GetCurrentDirectory(), PLUGIN_DIRECTORY);
+            _pluginPath = pluginPath ?? Path.Combine(GetSolutionDirectory(), PLUGIN_DIRECTORY);
             _getFiles = getFiles ?? ((path) => Directory.GetFiles(path, PLUGIN_EXTENTION));
             _loadAssembly = loadAssembly ?? ((file) => Assembly.LoadFrom(file));
         }
@@ -32,10 +33,10 @@ namespace Savanna.Logic
         /// <summary>
         /// Creates creation dictatory for plugins
         /// </summary>
-        /// <returns>Dictatory with key : animal pairs</returns>
-        public Dictionary<char, Func<Animal>> LoadAndValidatePlugins()
+        /// <returns>Dictatory with key : (creator, name) pairs</returns>
+        public Dictionary<char, (Func<Animal> Creator, string AnimalName)> LoadAndValidatePlugins()
         {
-            var creators = new Dictionary<char, Func<Animal>>();
+            var creators = new Dictionary<char, (Func<Animal> Creator, string AnimalName)>();
 
             foreach (var assembly in LoadAssemblies())
             {
@@ -109,7 +110,7 @@ namespace Savanna.Logic
         /// <param name="animalType">Animal type to create.</param>
         /// <param name="dictatory">Dictatory where key : instance pair would be saved</param>
         /// <returns>Bool if animal was valid.</returns>
-        private bool ValidateAnimal(Type? animalType, Dictionary<char, Func<Animal>> dictatory)
+        private bool ValidateAnimal(Type? animalType, Dictionary<char, (Func<Animal> Creator, string AnimalName)> dictatory)
         {
             try
             {
@@ -130,11 +131,25 @@ namespace Savanna.Logic
         /// </summary>
         /// <param name="animalType">Animal to register</param>
         /// <param name="dictatory">Dictatory where it is saved</param>
-        private void RegisterAnimal(Type? animalType, Dictionary<char, Func<Animal>> dictatory)
+        private void RegisterAnimal(Type? animalType, Dictionary<char, (Func<Animal> Creator, string AnimalName)> dictatory)
         {
             var instance = (Animal)Activator.CreateInstance(animalType);
             char key = instance.CreationKey;
-            dictatory[key] = () => (Animal)Activator.CreateInstance(animalType);
+            dictatory[key] = (() => (Animal)Activator.CreateInstance(animalType), instance.Name);
+        }
+
+        /// <summary>
+        /// Get solution directory
+        /// </summary>
+        /// <returns>Solution directory if found, if not current directory</returns>
+        private string GetSolutionDirectory()
+        {
+            var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
+            while (directory != null && !directory.GetFiles(SOLUTION_EXTENTION).Any())
+            {
+                directory = directory.Parent;
+            }
+            return directory.FullName ?? Directory.GetCurrentDirectory();
         }
     }
 }

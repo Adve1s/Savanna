@@ -1,0 +1,108 @@
+﻿@model Savanna.Logic.World?
+@{
+    ViewData["Title"] = "Home Page";
+    const char EMPTY_CELL = '.';
+    const string SIMULATION_BOARD_ID = "simulationBoard";
+}
+
+<div class="text-center">
+    @if (Model == null)
+    {
+        <h1>Animal Simulation</h1>
+        <p>Choose an option to begin:</p>
+        <form asp-action="CreateWorld" method="post">
+            <button type="submit" class="btn btn-secondary">Create New World</button>
+        </form>
+        <br />
+        <form asp-action="LoadWorld" method="post">
+            <button type="submit" class="btn btn-secondary">Load Saved World</button>
+        </form>
+    }
+    else
+    {
+        <h1>World Simulation</h1>
+        <div style="display:inline">
+        @foreach (var animal in Model.GetAvailableAnimalInfo())
+        {
+            <button onclick="addAnimal('@animal.CreationKey')" class="btn btn-secondary">Add @animal.Name (@animal.CreationKey)</button>
+        }
+        </div>
+        <table id="@SIMULATION_BOARD_ID" style = "border-collapse: collapse">
+            @for(int row = 0; row < Model.Height; row++)
+            {
+                <tr >
+                    @for(int column = 0; column < Model.Width; column++)
+                    {
+                        <td id = "cell-@row-@column" style = "border: 1px solid #ccc; width:30px; height:30px; text-align:center">
+                            @(Model.GetField()[row, column]?.DisplayChar ?? EMPTY_CELL) 
+                        </td>
+                    }
+                </tr>
+            }
+        </table>
+        <div style="margin-top:20px;">
+            <form asp-action="ClearWorld" method="post">
+                <button type="submit" class="btn btn-secondary">Start New World</button>
+            </form>
+        </div>
+    }
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+    <script>
+        const HUB_URL = "/gameHub";
+        const GAME_UPDATE_MESSAGE = "GameUpdate";
+        const ADD_ANIMAL_MESSAGE = "AddAnimal";
+        const SIMULATION_TABLE_ID = '@SIMULATION_BOARD_ID';
+        const EMPTY_CELL = '.';
+        const DEAD_ANIMAL = 'X';
+        const CELL_ID_PREFIX = "cell";
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(HUB_URL)
+            .build();
+
+        connection.on(GAME_UPDATE_MESSAGE, function(data) {
+            updateBoard(data.field, data.highlightedRow, data.highlightedColumn);
+        });
+
+        connection.start().then(function() {
+            console.log("Connected to game hub");
+        });
+
+        function updateBoard(field, highlightedRow, highlightedColumn)
+        {
+            for (let row = 0; row < field.length; row++)
+            {
+                for (let column = 0; column < field[row].length; column++)
+                {
+                    const cell = document.getElementById(`${CELL_ID_PREFIX}-${row}-${column}`);
+                    if(cell)
+                    {
+                        const animal = field[row][column];
+                        cell.textContent = !animal ? EMPTY_CELL : (animal.isAlive ? animal.displayChar : DEAD_ANIMAL);
+                    }
+                }
+            }
+         //TODO: Highlighted handling
+        }
+
+        function addAnimal(key) {
+            connection.invoke(ADD_ANIMAL_MESSAGE,key);
+        }
+
+        document.addEventListener('keypress',function(e){
+            if(document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT' || document.activeElement.isContentEditable){
+                return;
+            }
+            
+            if(document.getElementById(SIMULATION_TABLE_ID)){
+                addAnimal(e.key.toUpperCase());
+            }
+        });
+
+        // function handleCellClick(row, column)
+        // {
+        //     connection.invoke("HandleCellClick", row, column);
+        // }
+    </script>
+</div>

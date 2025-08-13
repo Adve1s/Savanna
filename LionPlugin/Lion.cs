@@ -10,7 +10,7 @@ namespace LionPlugin
     {
         // Lion settings as constants
         private const string LION_NAME = "Lion";
-        private const string LION_DISPLAY_SYMBOL = "L";
+        private const char LION_DISPLAY_SYMBOL = 'L';
         private const char LION_CREATION_KEY = 'L';
         private const int LION_DEFAULT_SPEED = 8;
         private const int LION_DEFAULT_VISION = 4;
@@ -41,7 +41,7 @@ namespace LionPlugin
 
         // Animal settings used
         public override string Name => LION_NAME;
-        public override string DisplaySymbol => LION_DISPLAY_SYMBOL;
+        public override char DisplayChar => LION_DISPLAY_SYMBOL;
         public override char CreationKey => LION_CREATION_KEY;
         protected override int DefaultSpeed => LION_DEFAULT_SPEED;
         protected override int DefaultVision => LION_DEFAULT_VISION;

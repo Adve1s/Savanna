@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Savanna", "Savanna\Savanna.csproj", "{D06B7780-6AF1-46D0-938B-5EEB42A810DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Savanna.ConsoleUI", "Savanna\Savanna.ConsoleUI.csproj", "{D06B7780-6AF1-46D0-938B-5EEB42A810DD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Savanna.Logic", "Savanna.Logic\Savanna.Logic.csproj", "{8397EF3F-DF17-44B2-A602-E71610772D75}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LionPlugin", "LionPlugin\LionPlugin.csproj", "{DDA784BC-D9A9-4F2A-8727-C70DF5C04227}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AntelopePlugin", "AntelopePlugin\AntelopePlugin.csproj", "{5B398B7B-C79D-47E8-B524-EB51B35A4336}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Savanna.WebUI", "Savanna.WebUI\Savanna.WebUI.csproj", "{1273837C-80B6-B910-9126-22D636D19158}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B398B7B-C79D-47E8-B524-EB51B35A4336}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1273837C-80B6-B910-9126-22D636D19158}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1273837C-80B6-B910-9126-22D636D19158}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1273837C-80B6-B910-9126-22D636D19158}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1273837C-80B6-B910-9126-22D636D19158}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,9 +6,11 @@ namespace Savanna.Tests
     [TestClass]
     public sealed class AnimalTests
     {
+        private static PluginManager pluginManager = new PluginManager(Directory.GetCurrentDirectory(), path => new[] { "oneFile.dll" }, file => typeof(TestAnimal).Assembly);
+        private static AnimalFactory _animalFactory = new AnimalFactory(pluginManager);
         private (World world, Animal?[,] visibleArea, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly, TestAnimal animal) MatingSetup()
         {
-            var world = new World(100, 100);
+            var world = new World(_animalFactory, 100, 100);
 
             var animal = new TestAnimal();
             var secondAnimal = new TestAnimal();
@@ -45,7 +47,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Turn_WhenNoMatingAndAlive_AnimalDoesItsActionAndUpdatesStats()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             var startHealth = animal.Health;
@@ -79,7 +81,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Turn_WhenDead_UpdaresRoundsDead()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             animal.TestIsAlive = false;
@@ -282,7 +284,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Move_WhenSuccess_TestMovesAnimal()
         {
-            var world = new World(10, 15);
+            var world = new World(_animalFactory, 10, 15);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(9, 14));
 
@@ -295,7 +297,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Move_WhenNoDirection_TestRests()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             var startStamina = animal.Stamina;
@@ -309,7 +311,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Move_WhenNoStamina_TestMovesAnimal()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             animal.TestChangeStamina(-animal.Stamina - 1);
@@ -462,7 +464,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenEmpty_ReturnsNoAnimalCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             var field = world.GetField();
             var animal = new TestAnimal();
 
@@ -474,13 +476,13 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenOnlyWrongType_ReturnsNoAnimalCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             var wrongAnimal = new TestAnimal();
             wrongAnimal.UpdateName("Wrong");
             var wrongAnimal2 = new TestAnimal();
             wrongAnimal2.UpdateName("WrongToo");
-            world.AddAnimal(wrongAnimal, new AnimalCoordinates(0,0));
-            world.AddAnimal(wrongAnimal2, new AnimalCoordinates(0,2));
+            world.AddAnimal(wrongAnimal, new AnimalCoordinates(0, 0));
+            world.AddAnimal(wrongAnimal2, new AnimalCoordinates(0, 2));
             var field = world.GetField();
             var animal = new TestAnimal();
 
@@ -492,7 +494,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenOnlyRightTypeExists_ReturnsCorrectCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0, 0));
             world.AddAnimal(new TestAnimal(), new AnimalCoordinates(1, 0));
             var field = world.GetField();
@@ -510,7 +512,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenRightAndWrongTypeExists_ReturnsCorrectCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             var wrongAnimal = new TestAnimal();
             wrongAnimal.UpdateName("Wrong");
             world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0, 0));

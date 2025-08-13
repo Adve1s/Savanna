@@ -17,7 +17,8 @@ namespace Savanna.Tests
 
             Assert.IsTrue(result.ContainsKey('T'));
             Assert.AreEqual(result.Count,1);
-            Assert.IsInstanceOfType<Animal>(result['T']());
+            Assert.IsInstanceOfType<Animal>(result['T'].Creator());
+            Assert.AreEqual(result['T'].AnimalName, "Test");
         }
 
         [TestMethod]
@@ -55,7 +56,8 @@ namespace Savanna.Tests
 
             Assert.IsTrue(result.ContainsKey('T'));
             Assert.AreEqual(result.Count, 1);
-            Assert.IsInstanceOfType<Animal>(result['T']());
+            Assert.IsInstanceOfType<Animal>(result['T'].Creator());
+            Assert.AreEqual(result['T'].AnimalName, "Test");
         }
 
         [TestMethod]
@@ -81,7 +83,8 @@ namespace Savanna.Tests
 
             Assert.IsTrue(result.ContainsKey('T'));
             Assert.AreEqual(result.Count, 1);
-            Assert.IsInstanceOfType<Animal>(result['T']());
+            Assert.IsInstanceOfType<Animal>(result['T'].Creator());
+            Assert.AreEqual(result['T'].AnimalName, "Test");
         }
     }
 }

@@ -10,7 +10,7 @@ namespace AntelopePlugin
     {
         // Antelope settings as constants
         private const string ANTELOPE_NAME = "Antelope";
-        private const string ANTELOPE_DISPLAY_SYMBOL = "A";
+        private const char ANTELOPE_DISPLAY_SYMBOL = 'A';
         private const char ANTELOPE_CREATION_KEY = 'A';
         private const int ANTELOPE_DEFAULT_SPEED = 3;
         private const int ANTELOPE_DEFAULT_VISION = 5;
@@ -38,7 +38,7 @@ namespace AntelopePlugin
 
         // Animal settings used
         public override string Name => ANTELOPE_NAME;
-        public override string DisplaySymbol => ANTELOPE_DISPLAY_SYMBOL;
+        public override char DisplayChar => ANTELOPE_DISPLAY_SYMBOL;
         public override char CreationKey => ANTELOPE_CREATION_KEY;
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
         protected override int DefaultVision => ANTELOPE_DEFAULT_VISION;

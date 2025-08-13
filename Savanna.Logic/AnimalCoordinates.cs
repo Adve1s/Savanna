@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,6 +38,17 @@ namespace Savanna.Logic
             Row = row;
             Column = column;
             Animal = animal;
+        }
+
+        /// <summary>
+        /// Update position
+        /// </summary>
+        /// <param name="row">row of position</param>
+        /// <param name="column">column of position</param>
+        public void Update(int row, int column)
+        {
+            Row = row;
+            Column = column;
         }
     }
 }

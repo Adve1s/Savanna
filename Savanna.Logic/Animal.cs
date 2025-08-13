@@ -17,7 +17,7 @@
 
         // Animal settings used
         public abstract string Name { get; }
-        public abstract string DisplaySymbol { get; }
+        public abstract char DisplayChar { get; }
         public abstract char CreationKey { get; }
         protected abstract int DefaultSpeed { get; }
         protected abstract int DefaultVision { get; }
@@ -111,7 +111,7 @@
                 _currentChildrenPause += TIME_PER_ROUND;
                 _age += TIME_PER_ROUND;
                 Health -= PerRoundHealthDeduction;
-                if (Health <= 0 || _age > MaxAgeLimit) Die();
+                if (Health <= 0 || _age > MaxAgeLimit) Death();
             }
             else _roundsDead++;
         }
@@ -129,7 +129,7 @@
         /// <summary>
         /// Animal dies
         /// </summary>
-        protected void Die() => _isAlive = false;
+        protected void Death() => _isAlive = false;
 
         /// <summary>
         /// Animal gets damaged
@@ -138,7 +138,7 @@
         public void Damage(double damageDone)
         {
             Health -= damageDone;
-            if (Health <= 0) Die();
+            if (Health <= 0) Death();
         }
 
         /// <summary>
@@ -182,7 +182,7 @@
         /// </summary>
         /// <param name="world">Where new animal will be added</param>
         /// <param name="self">Parent</param>
-        private void Mate(World world, AnimalCoordinates self)
+        private void Birth(World world, AnimalCoordinates self)
         {
             var direction = Movement.RandomDirection(Movement.GetValidDirections(world.GetField(), self));
             if (direction != null) world.AddAnimal(world.AnimalFactory.CreateAnimal(CreationKey),
@@ -239,7 +239,7 @@
                 _possibleMates[animal] = _possibleMates.GetValueOrDefault(animal, 0) + 1;
                 if (_possibleMates[animal] >= ROUNDS_TO_REPRODUCE && animal._possibleMates.ContainsKey(this) && animal._possibleMates[this] >= ROUNDS_TO_REPRODUCE)
                 {
-                    Mate(world, selfGlobaly);
+                    Birth(world, selfGlobaly);
                     return;
                 }
             }

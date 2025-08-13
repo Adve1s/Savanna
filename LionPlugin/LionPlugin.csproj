@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)Savanna\bin\$(Configuration)\$(TargetFramework)\plugins\&quot; /I /Y&#xD;&#xA;" />
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)plugins\&quot; /I /Y&#xD;&#xA;" />
   </Target>
 
 </Project>

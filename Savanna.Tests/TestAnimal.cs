@@ -13,7 +13,7 @@ namespace Savanna.Tests
         public const double TEST_TIME_PER_ROUND = TIME_PER_ROUND;
         // Antelope settings as constants
         private string TEST_ANIMAL_NAME = "Test";
-        private const string TEST_ANIMAL_DISPLAY_SYMBOL = "T";
+        private const char TEST_ANIMAL_DISPLAY_SYMBOL = 'T';
         private const char TEST_ANIMAL_CREATION_KEY = 'T';
         private const int TEST_ANIMAL_DEFAULT_SPEED = 3;
         private const int TEST_ANIMAL_DEFAULT_VISION = 5;
@@ -35,7 +35,7 @@ namespace Savanna.Tests
 
         // Animal settings used
         public override string Name => TEST_ANIMAL_NAME;
-        public override string DisplaySymbol => TEST_ANIMAL_DISPLAY_SYMBOL;
+        public override char DisplayChar => TEST_ANIMAL_DISPLAY_SYMBOL;
         public override char CreationKey => TEST_ANIMAL_CREATION_KEY;
         protected override int DefaultSpeed => TEST_ANIMAL_DEFAULT_SPEED;
         protected override int DefaultVision => TEST_ANIMAL_DEFAULT_VISION;
