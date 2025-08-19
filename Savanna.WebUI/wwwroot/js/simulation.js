@@ -1,4 +1,5 @@
-﻿const config = JSON.parse(document.getElementById('simulation-config').textContent);
+﻿
+const config = JSON.parse(document.getElementById('simulation-config').textContent);
 
 const PAUSE_KEY = 'Space';
 const DISPLAY_KEY = 'C';
