@@ -39,7 +39,7 @@ namespace Savanna.WebUI.Controllers
         [HttpPost]
         public IActionResult CreateWorld()
         {
-            _worldService.CreateNewWorld(10,10);
+            _worldService.CreateNewWorld(10,20);
             return RedirectToAction("Index");
         }
 

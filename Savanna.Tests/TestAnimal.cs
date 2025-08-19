@@ -14,6 +14,7 @@ namespace Savanna.Tests
         // Antelope settings as constants
         private string TEST_ANIMAL_NAME = "Test";
         private const char TEST_ANIMAL_DISPLAY_SYMBOL = 'T';
+        private const string TEST_ANIMAL_DISPLAY_EMOJI = "👽";
         private const char TEST_ANIMAL_CREATION_KEY = 'T';
         private const int TEST_ANIMAL_DEFAULT_SPEED = 3;
         private const int TEST_ANIMAL_DEFAULT_VISION = 5;
@@ -36,14 +37,15 @@ namespace Savanna.Tests
         // Animal settings used
         public override string Name => TEST_ANIMAL_NAME;
         public override char DisplayChar => TEST_ANIMAL_DISPLAY_SYMBOL;
+        public override string DisplayEmoji => TEST_ANIMAL_DISPLAY_EMOJI;
         public override char CreationKey => TEST_ANIMAL_CREATION_KEY;
         protected override int DefaultSpeed => TEST_ANIMAL_DEFAULT_SPEED;
         protected override int DefaultVision => TEST_ANIMAL_DEFAULT_VISION;
         protected override int DefaultEndurance => TEST_ANIMAL_DEFAULT_ENDURANCE;
         protected override int DefaultDefence => TEST_ANIMAL_DEFAULT_DEFENCE;
 
-        protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
-        protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
+        public override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
+        public override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
 
         protected override int RoundsToDecompose => TEST_ANIMAL_ROUNDS_TO_DECOMPOSE;
         protected override double PerRoundHealthDeduction => TEST_ANIMAL_HEALTH_DEDUCTION;

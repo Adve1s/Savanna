@@ -1,8 +1,30 @@
 ﻿@model Savanna.Logic.World?
 @{
     ViewData["Title"] = "Home Page";
+    const string CREATE_WORLD_BUTTON = "Create New World";
+    const string LOAD_WORLD_BUTTON = "Load Saved World";
+    const string NEW_WORLD_BUTTON = "Start New World";
     const char EMPTY_CELL = '.';
     const string SIMULATION_BOARD_ID = "simulationBoard";
+    const string TOGGLE_BUTTON_ID = "displayToggle";
+    const string PAUSE_BUTTON_ID = "pauseButton";
+    const string CELL_ID = "cell-{0}-{1}";
+    const string ADD_ANIMAL_BUTTON = "Add {0} ({1})";
+    var ANIMAL_INFO_CARD_IDS = new { 
+        Card = "animalInfoCard",
+        Icon = "animalIcon",
+        Name = "animalName",
+        Stats = "animalStats",
+        HealthBar = "animalHealthBar" ,
+        HealthText = "animalHealthText" ,
+        StaminaBar = "animalStaminaBar",
+        StaminaText = "animalStaminaText",
+        Age = "animalAge",
+        Offsprings = "animalOffsprings"
+    };
+    bool modelExists;
+    if (Model == null) modelExists = false;
+    else modelExists = true;
 }
 
 <div class="text-center">
@@ -11,98 +33,93 @@
         <h1>Animal Simulation</h1>
         <p>Choose an option to begin:</p>
         <form asp-action="CreateWorld" method="post">
-            <button type="submit" class="btn btn-secondary">Create New World</button>
+            <button type="submit" class="btn btn-secondary">@CREATE_WORLD_BUTTON</button>
         </form>
         <br />
         <form asp-action="LoadWorld" method="post">
-            <button type="submit" class="btn btn-secondary">Load Saved World</button>
+            <button type="submit" class="btn btn-secondary">@LOAD_WORLD_BUTTON</button>
         </form>
     }
     else
     {
-        <h1>World Simulation</h1>
-        <div style="display:inline">
-        @foreach (var animal in Model.GetAvailableAnimalInfo())
-        {
-            <button onclick="addAnimal('@animal.CreationKey')" class="btn btn-secondary">Add @animal.Name (@animal.CreationKey)</button>
-        }
-        </div>
-        <table id="@SIMULATION_BOARD_ID" style = "border-collapse: collapse">
-            @for(int row = 0; row < Model.Height; row++)
-            {
-                <tr >
-                    @for(int column = 0; column < Model.Width; column++)
+        <div class="container">
+            <h1>World Simulation</h1>
+            <div class="row">
+                <div class="d-flex flex-column col-3 gap-3 mt-5" style="min-width: 250px">
+                    <button id="@PAUSE_BUTTON_ID" onclick="togglePause()" class="btn btn-outline-primary w-100"></button>
+                    <button id="@TOGGLE_BUTTON_ID" onclick="toggleDisplayMode()" class="btn btn-outline-success w-100"></button>
+                    @foreach (var animal in Model.GetAvailableAnimalInfo())
                     {
-                        <td id = "cell-@row-@column" style = "border: 1px solid #ccc; width:30px; height:30px; text-align:center">
-                            @(Model.GetField()[row, column]?.DisplayChar ?? EMPTY_CELL) 
-                        </td>
+                        <button onclick="addAnimal('@animal.CreationKey')" class="btn btn-outline-secondary w-100">@String.Format(ADD_ANIMAL_BUTTON,animal.Name,animal.CreationKey)</button>
                     }
-                </tr>
-            }
-        </table>
+                </div>
+                <div class="col-6 overflow-auto d-flex justify-content-center align-items-center">
+                    <table id="@SIMULATION_BOARD_ID">
+                        @for(int row = 0; row < Model.Height; row++)
+                        {
+                            <tr >
+                                @for(int column = 0; column < Model.Width; column++)
+                                {
+                                    <td id="@String.Format(CELL_ID,row,column)" onclick="handleCellClick(@row, @column)" style="border: 1px solid #ccc; width:30px; height:30px; text-align:center">
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </table>
+                </div>
+                <div class="col-3 mt-5" style="min-width:250px">
+                    <div id="animalInfoCard" style="display:block;" class="card w-100">
+                        <div class="card-header d-flex justify-content-center gap-1">
+                            <h3 id="@ANIMAL_INFO_CARD_IDS.Name"></h3>
+                            <h3 id="@ANIMAL_INFO_CARD_IDS.Icon"></h3>
+                        </div>
+                        <div class="row card-body text-start" id="@ANIMAL_INFO_CARD_IDS.Stats">
+                            <div class="col-5">Health:</div>
+                            <div class="col-7">
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" id="@ANIMAL_INFO_CARD_IDS.HealthBar" style="width: 0%"></div>
+                                </div>
+                                <small id="@ANIMAL_INFO_CARD_IDS.HealthText" class="text-muted"></small>
+                            </div>
+                            <div class="col-5">Stamina:</div>
+                            <div class="col-7">
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" id="@ANIMAL_INFO_CARD_IDS.StaminaBar" style="width: 0%"></div>
+                                </div>
+                                <small id="@ANIMAL_INFO_CARD_IDS.StaminaText" class="text-muted"></small>
+                            </div>
+                            <div class="col-5">Age:</div><div class="col-7" id="@ANIMAL_INFO_CARD_IDS.Age"></div>
+                            <div class="col-5">Offsprings:</div><div class="col-7" id="@ANIMAL_INFO_CARD_IDS.Offsprings"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div style="margin-top:20px;">
             <form asp-action="ClearWorld" method="post">
-                <button type="submit" class="btn btn-secondary">Start New World</button>
+                <button type="submit" class="btn btn-secondary">@NEW_WORLD_BUTTON</button>
             </form>
         </div>
     }
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
-    <script>
-        const HUB_URL = "/gameHub";
-        const GAME_UPDATE_MESSAGE = "GameUpdate";
-        const ADD_ANIMAL_MESSAGE = "AddAnimal";
-        const SIMULATION_TABLE_ID = '@SIMULATION_BOARD_ID';
-        const EMPTY_CELL = '.';
-        const DEAD_ANIMAL = 'X';
-        const CELL_ID_PREFIX = "cell";
-
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl(HUB_URL)
-            .build();
-
-        connection.on(GAME_UPDATE_MESSAGE, function(data) {
-            updateBoard(data.field, data.highlightedRow, data.highlightedColumn);
-        });
-
-        connection.start().then(function() {
-            console.log("Connected to game hub");
-        });
-
-        function updateBoard(field, highlightedRow, highlightedColumn)
-        {
-            for (let row = 0; row < field.length; row++)
-            {
-                for (let column = 0; column < field[row].length; column++)
-                {
-                    const cell = document.getElementById(`${CELL_ID_PREFIX}-${row}-${column}`);
-                    if(cell)
-                    {
-                        const animal = field[row][column];
-                        cell.textContent = !animal ? EMPTY_CELL : (animal.isAlive ? animal.displayChar : DEAD_ANIMAL);
-                    }
-                }
-            }
-         //TODO: Highlighted handling
-        }
-
-        function addAnimal(key) {
-            connection.invoke(ADD_ANIMAL_MESSAGE,key);
-        }
-
-        document.addEventListener('keypress',function(e){
-            if(document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT' || document.activeElement.isContentEditable){
-                return;
-            }
-            
-            if(document.getElementById(SIMULATION_TABLE_ID)){
-                addAnimal(e.key.toUpperCase());
-            }
-        });
-
-        // function handleCellClick(row, column)
-        // {
-        //     connection.invoke("HandleCellClick", row, column);
-        // }
+    <script id="simulation-config" type="application/json">
+        @Html.Raw(Json.Serialize( new {
+            hubUrl = Savanna.WebUI.Hubs.GameHub.HUB_URL,
+            gameUpdate = Savanna.WebUI.Hubs.GameHub.GAME_UPDATE_MESSAGE,
+            addAnimal = Savanna.WebUI.Hubs.GameHub.ADD_ANIMAL_MESSAGE,
+            togglePause = Savanna.WebUI.Hubs.GameHub.TOGGLE_PAUSE_MESSAGE,
+            handleCellClick = Savanna.WebUI.Hubs.GameHub.HANDLE_CELL_CLICK_MESSAGE,
+            handleCellUnclick = Savanna.WebUI.Hubs.GameHub.HANDLE_CELL_UNCLICK_MESSAGE,
+            getStartState = Savanna.WebUI.Hubs.GameHub.GET_START_STATE_MESSAGE,
+            tableId = SIMULATION_BOARD_ID,
+            toggleId = TOGGLE_BUTTON_ID,
+            pauseId = PAUSE_BUTTON_ID,
+            cellIdFormat = CELL_ID,
+            dataCardInfo = ANIMAL_INFO_CARD_IDS,
+            simulationScreen = modelExists
+        }))
     </script>
+    <script src="~/js/simulation.js"></script>
 </div>

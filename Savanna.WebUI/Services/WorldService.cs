@@ -40,14 +40,6 @@ namespace Savanna.WebUI.Services
         }
 
         /// <summary>
-        /// Progresses current world to next iteration
-        /// </summary>
-        public void NextTurn()
-        {
-            CurrentWorld.NextTurn();
-        }
-
-        /// <summary>
         /// Gets if world exists
         /// </summary>
         public bool HasWorld => CurrentWorld != null;

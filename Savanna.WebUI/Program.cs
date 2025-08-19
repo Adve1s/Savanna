@@ -14,7 +14,8 @@ namespace Savanna.WebUI
             builder.Services.AddControllersWithViews();
             builder.Services.AddSignalR();
             builder.Services.AddSingleton<WorldService>();
-            builder.Services.AddHostedService<GameLoopService>();
+            builder.Services.AddSingleton<GameLoopService>();
+            builder.Services.AddHostedService<GameLoopService>(provider => provider.GetRequiredService<GameLoopService>());
 
             var app = builder.Build();
             app.MapHub<GameHub>(GameHub.HUB_URL);

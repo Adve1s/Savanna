@@ -11,6 +11,7 @@ namespace LionPlugin
         // Lion settings as constants
         private const string LION_NAME = "Lion";
         private const char LION_DISPLAY_SYMBOL = 'L';
+        private const string LION_DISPLAY_EMOJI = "🦁";
         private const char LION_CREATION_KEY = 'L';
         private const int LION_DEFAULT_SPEED = 8;
         private const int LION_DEFAULT_VISION = 4;
@@ -42,14 +43,15 @@ namespace LionPlugin
         // Animal settings used
         public override string Name => LION_NAME;
         public override char DisplayChar => LION_DISPLAY_SYMBOL;
+        public override string DisplayEmoji => LION_DISPLAY_EMOJI;
         public override char CreationKey => LION_CREATION_KEY;
         protected override int DefaultSpeed => LION_DEFAULT_SPEED;
         protected override int DefaultVision => LION_DEFAULT_VISION;
         protected override int DefaultEndurance => LION_DEFAULT_ENDURANCE;
         protected override int DefaultDefence => LION_DEFAULT_DEFENCE;
 
-        protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
-        protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
+        public override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
+        public override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
 
         protected override int RoundsToDecompose => LION_ROUNDS_TO_DECOMPOSE;
         protected override double PerRoundHealthDeduction => LION_HEALTH_DEDUCTION;

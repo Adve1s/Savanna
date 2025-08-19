@@ -14,6 +14,7 @@ namespace Savanna.WebUI.Services
         private readonly IHubContext<GameHub> _hubContext;
         private Timer? _timer;
         private Animal? _highlightedAnimal;
+        private bool _isPaused = true;
 
         /// <summary>
         /// Creates GameLoopService instant
@@ -31,21 +32,40 @@ namespace Savanna.WebUI.Services
         /// </summary>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(UPDATE_INTERVAL_MS));
+            _timer = new Timer(NextGameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(UPDATE_INTERVAL_MS));
             return Task.CompletedTask;
         }
 
         /// <summary>
         /// Progress the world and send that data to web
         /// </summary>
-        private async void DoWork(object? state)
+        private async void NextGameLoop(object? state)
+        {
+            if (_worldService.HasWorld && !_isPaused)
+            {
+                _worldService.CurrentWorld.NextTurn();
+                await SendGameUpdate();
+            }
+        }
+
+        /// <summary>
+        /// Sends updated board state
+        /// </summary>
+        internal async Task SendGameUpdate()
         {
             if (_worldService.HasWorld)
             {
-                _worldService.NextTurn();
                 var data = SerializeData();
                 await _hubContext.Clients.All.SendAsync(GameHub.GAME_UPDATE_MESSAGE, data);
             }
+        }
+
+        /// <summary>
+        /// Toggles pause
+        /// </summary>
+        internal void TogglePause()
+        {
+            _isPaused = !_isPaused;
         }
 
         /// <summary>
@@ -59,6 +79,7 @@ namespace Savanna.WebUI.Services
             int? highlightedRow = null;
             int? highlightedColumn = null;
             var returnField = new object?[_worldService.CurrentWorld.Height][];
+            bool checkHighlightedAnimal = CheckHighlightedAnimal();
 
             for (int row = 0; row < _worldService.CurrentWorld.Height; row++)
             {
@@ -67,8 +88,8 @@ namespace Savanna.WebUI.Services
                 {
                     var animal = field[row, column];
                     if (animal == null) returnField[row][column] = null;
-                    else returnField[row][column] = new {displayChar = animal.DisplayChar, isAlive = animal.IsAlive()};
-                    if (_highlightedAnimal != null && _highlightedAnimal == field[row, column])
+                    else returnField[row][column] = new {displayChar = animal.DisplayChar, displayEmoji = animal.DisplayEmoji, isAlive = animal.IsAlive()};
+                    if (checkHighlightedAnimal && _highlightedAnimal == field[row, column])
                     {
                         highlightedRow = row;
                         highlightedColumn = column;
@@ -76,7 +97,31 @@ namespace Savanna.WebUI.Services
                 }
 
             }
-            return new { field = returnField, highlightRow = highlightedRow, highlightColumn = highlightedColumn };
+            return new { field = returnField, highlightRow = highlightedRow, highlightColumn = highlightedColumn, highlightAnimal = _highlightedAnimal };
+        }
+
+        /// <summary>
+        /// Checks if animal is set and alive, updates if decomposed.
+        /// </summary>
+        /// <returns>Bool value representing if animal exists and is alive</returns>
+        private bool CheckHighlightedAnimal()
+        {
+            if (_highlightedAnimal != null)
+                if (_highlightedAnimal.IsAlive()) return true;
+                else if (_highlightedAnimal.IsDecomposed()) _highlightedAnimal = null;
+            return false;
+        }
+        
+        /// <summary>
+        /// Updates the highlighted animal.
+        /// </summary>
+        /// <param name="row">Row where new update is clicked</param>
+        /// <param name="column">Column where new update is clicked</param>
+        internal Task ChangeHighLightedAnimal(int? row = null, int? column = null)
+        {
+            if (_worldService.HasWorld && row != null && column != null) _highlightedAnimal = _worldService.CurrentWorld.GetField()[(int)row, (int)column];
+            else _highlightedAnimal = null;
+            return Task.CompletedTask;
         }
 
         /// <summary>

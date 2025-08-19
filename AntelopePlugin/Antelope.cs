@@ -11,6 +11,7 @@ namespace AntelopePlugin
         // Antelope settings as constants
         private const string ANTELOPE_NAME = "Antelope";
         private const char ANTELOPE_DISPLAY_SYMBOL = 'A';
+        private const string ANTELOPE_DISPLAY_EMOJI = "🦌";
         private const char ANTELOPE_CREATION_KEY = 'A';
         private const int ANTELOPE_DEFAULT_SPEED = 3;
         private const int ANTELOPE_DEFAULT_VISION = 5;
@@ -39,14 +40,15 @@ namespace AntelopePlugin
         // Animal settings used
         public override string Name => ANTELOPE_NAME;
         public override char DisplayChar => ANTELOPE_DISPLAY_SYMBOL;
+        public override string DisplayEmoji => ANTELOPE_DISPLAY_EMOJI;
         public override char CreationKey => ANTELOPE_CREATION_KEY;
         protected override int DefaultSpeed => ANTELOPE_DEFAULT_SPEED;
         protected override int DefaultVision => ANTELOPE_DEFAULT_VISION;
         protected override int DefaultEndurance => ANTELOPE_DEFAULT_ENDURANCE;
         protected override int DefaultDefence => ANTELOPE_DEFAULT_DEFENCE;
 
-        protected override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
-        protected override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
+        public override double MaxStamina => DEFAULT_MAX_STAMINA * Speed;
+        public override double MaxHealth => DEFAULT_MAX_HEALTH * Defence;
 
         protected override int RoundsToDecompose => ANTELOPE_ROUNDS_TO_DECOMPOSE;
         protected override double PerRoundHealthDeduction => ANTELOPE_HEALTH_DEDUCTION;

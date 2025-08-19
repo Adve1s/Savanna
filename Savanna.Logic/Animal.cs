@@ -18,14 +18,15 @@
         // Animal settings used
         public abstract string Name { get; }
         public abstract char DisplayChar { get; }
+        public abstract string DisplayEmoji { get; }
         public abstract char CreationKey { get; }
         protected abstract int DefaultSpeed { get; }
         protected abstract int DefaultVision { get; }
         protected abstract int DefaultEndurance { get; }
         protected abstract int DefaultDefence { get; }
 
-        protected abstract double MaxStamina { get; }
-        protected abstract double MaxHealth { get; }
+        public abstract double MaxStamina { get; }
+        public abstract double MaxHealth { get; }
 
         protected abstract int RoundsToDecompose { get; }
         protected abstract double PerRoundHealthDeduction { get; }
@@ -42,9 +43,20 @@
 
         protected bool _isAlive = true;
         protected int _roundsDead = 0;
+        protected int _offsprings = 0;
         protected double _age = 0;
         protected double _currentChildrenPause = 0;
         protected Dictionary<Animal, int> _possibleMates = new Dictionary<Animal, int>();
+
+        public double Age
+        {
+            get => _age;
+        }
+
+        public int Offsprings
+        {
+            get => _offsprings;
+        }
 
         /// <summary>
         /// Gets animal current stamina
@@ -185,8 +197,11 @@
         private void Birth(World world, AnimalCoordinates self)
         {
             var direction = Movement.RandomDirection(Movement.GetValidDirections(world.GetField(), self));
-            if (direction != null) world.AddAnimal(world.AnimalFactory.CreateAnimal(CreationKey),
-                new AnimalCoordinates(self.Row + Movement.Directions[(Direction)direction].row, self.Column + Movement.Directions[(Direction)direction].column));
+            if (direction != null)
+            {
+                world.AddAnimal(world.AnimalFactory.CreateAnimal(CreationKey), new AnimalCoordinates(self.Row + Movement.Directions[(Direction)direction].row, self.Column + Movement.Directions[(Direction)direction].column));
+                _offsprings += 1;
+            }
             _possibleMates.Clear();
             _currentChildrenPause = 0;
         }
