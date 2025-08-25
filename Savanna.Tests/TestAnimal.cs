@@ -91,7 +91,7 @@ namespace Savanna.Tests
             _roundsDead = RoundsToDecompose + 1;
         }
 
-        public Dictionary<Animal, int> TestPossibleMates
+        public Dictionary<int, int> TestPossibleMates
         {
             get => _possibleMates;
             set => _possibleMates = value;

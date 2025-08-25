@@ -6,6 +6,7 @@
     /// </summary>
     public abstract partial class Animal
     {
+        private static int id_counter = 0;
         // Constants
         protected const double DEFAULT_MAX_STAMINA = 25;
         protected const double DEFAULT_MAX_HEALTH = 25;
@@ -46,17 +47,13 @@
         protected int _offsprings = 0;
         protected double _age = 0;
         protected double _currentChildrenPause = 0;
-        protected Dictionary<Animal, int> _possibleMates = new Dictionary<Animal, int>();
+        private int _id = id_counter++;
+        protected Dictionary<int, int> _possibleMates = new Dictionary<int, int>();
 
-        public double Age
-        {
-            get => _age;
-        }
-
-        public int Offsprings
-        {
-            get => _offsprings;
-        }
+        /// <summary>
+        /// Gets animal id
+        /// </summary>
+        public int ID => _id;
 
         /// <summary>
         /// Gets animal current stamina
@@ -248,11 +245,14 @@
             visibleArea[selfLocaly.Row, selfLocaly.Column] = null;
             var mates = GetAnimalByName(visibleArea, Name);
             mates = FilterCloseEnoughMates(mates, selfLocaly);
-            var closeMates = mates.Select(animal => animal.Animal).ToHashSet();
-            foreach (var animal in closeMates)
+            var closeMates = mates.Select(animal => animal.Animal.ID).ToHashSet();
+            foreach (var animalId in closeMates)
             {
-                _possibleMates[animal] = _possibleMates.GetValueOrDefault(animal, 0) + 1;
-                if (_possibleMates[animal] >= ROUNDS_TO_REPRODUCE && animal._possibleMates.ContainsKey(this) && animal._possibleMates[this] >= ROUNDS_TO_REPRODUCE)
+                _possibleMates[animalId] = _possibleMates.GetValueOrDefault(animalId, 0) + 1;
+                (int? row, int? column) = world.GetAnimalPositionByID(animalId);
+                Animal? animal = null;
+                if (row != null && column != null) animal = world.GetField()[(int)row, (int)column];
+                if (_possibleMates[animalId] >= ROUNDS_TO_REPRODUCE && animal._possibleMates.ContainsKey(ID) && animal._possibleMates[ID] >= ROUNDS_TO_REPRODUCE)
                 {
                     Birth(world, selfGlobaly);
                     return;

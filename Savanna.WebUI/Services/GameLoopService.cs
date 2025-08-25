@@ -13,7 +13,7 @@ namespace Savanna.WebUI.Services
         private readonly WorldService _worldService;
         private readonly IHubContext<GameHub> _hubContext;
         private Timer? _timer;
-        private Animal? _highlightedAnimal;
+        private AnimalCardInfoDTO? _highlightedAnimal;
         private bool _isPaused = true;
 
         /// <summary>
@@ -74,41 +74,31 @@ namespace Savanna.WebUI.Services
         /// <returns>Data needed for info displaying.</returns>
         private object SerializeData()
         {
-            var field = _worldService.CurrentWorld.GetField();
+            var world = _worldService.CurrentWorld.WorldToDisplayDTO();
 
             int? highlightedRow = null;
             int? highlightedColumn = null;
-            var returnField = new object?[_worldService.CurrentWorld.Height][];
-            bool checkHighlightedAnimal = CheckHighlightedAnimal();
 
-            for (int row = 0; row < _worldService.CurrentWorld.Height; row++)
+            if(_highlightedAnimal != null)
+                (highlightedRow,highlightedColumn) = _worldService.CurrentWorld.GetAnimalPositionByID(_highlightedAnimal.ID);
+            if (highlightedRow != null && highlightedColumn != null)
             {
-                returnField[row] = new object?[_worldService.CurrentWorld.Width];
-                for (int column = 0; column < _worldService.CurrentWorld.Width; column++)
-                {
-                    var animal = field[row, column];
-                    if (animal == null) returnField[row][column] = null;
-                    else returnField[row][column] = new {displayChar = animal.DisplayChar, displayEmoji = animal.DisplayEmoji, isAlive = animal.IsAlive()};
-                    if (checkHighlightedAnimal && _highlightedAnimal == field[row, column])
-                    {
-                        highlightedRow = row;
-                        highlightedColumn = column;
-                    }
-                }
+                _highlightedAnimal = _worldService.CurrentWorld.GetAnimalCardDTOByPosition((int)highlightedRow, (int)highlightedColumn);
+            } else _highlightedAnimal = null;
 
-            }
-            return new { field = returnField, highlightRow = highlightedRow, highlightColumn = highlightedColumn, highlightAnimal = _highlightedAnimal };
+            return new { field = world.AnimalField, iteration = world.Iteration, animalCount = world.AnimalsInWorld, highlightRow = highlightedRow, highlightColumn = highlightedColumn, highlightAnimal = _highlightedAnimal , test = _worldService.CurrentWorld};
         }
 
         /// <summary>
-        /// Checks if animal is set and alive, updates if decomposed.
+        /// Updates highlighted animal if it exists
         /// </summary>
-        /// <returns>Bool value representing if animal exists and is alive</returns>
-        private bool CheckHighlightedAnimal()
+        /// <returns>Bool value representing if animal exists</returns>
+        private bool UpdateHighlightedAnimal()
         {
             if (_highlightedAnimal != null)
-                if (_highlightedAnimal.IsAlive()) return true;
-                else if (_highlightedAnimal.IsDecomposed()) _highlightedAnimal = null;
+            {
+                _worldService.CurrentWorld.GetAnimalPositionByID(_highlightedAnimal.ID);
+            }
             return false;
         }
         
@@ -119,7 +109,7 @@ namespace Savanna.WebUI.Services
         /// <param name="column">Column where new update is clicked</param>
         internal Task ChangeHighLightedAnimal(int? row = null, int? column = null)
         {
-            if (_worldService.HasWorld && row != null && column != null) _highlightedAnimal = _worldService.CurrentWorld.GetField()[(int)row, (int)column];
+            if (_worldService.HasWorld && row != null && column != null) _highlightedAnimal = _worldService.CurrentWorld.GetAnimalCardDTOByPosition((int)row,(int)column);
             else _highlightedAnimal = null;
             return Task.CompletedTask;
         }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Savanna.WebUI.Models;
 
 namespace Savanna.WebUI.Data
 {
@@ -9,5 +10,7 @@ namespace Savanna.WebUI.Data
             : base(options)
         {
         }
+
+        public DbSet<WorldSave> WorldSaves { get; set; }
     }
 }

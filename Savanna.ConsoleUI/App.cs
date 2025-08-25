@@ -48,7 +48,7 @@ namespace Savanna
                 if (stopwatch.ElapsedMilliseconds >= updateIntervalMs)
                 {
                     _savannaWorld.NextTurn();
-                    _display.DisplayField(_savannaWorld.GetCharField());
+                    _display.DisplayField(_savannaWorld.WorldToDisplayDTO());
                     stopwatch.Restart();
                 }
             }

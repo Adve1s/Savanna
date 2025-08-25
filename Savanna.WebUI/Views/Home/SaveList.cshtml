@@ -1,0 +1,53 @@
+﻿@model IEnumerable<Savanna.WebUI.Models.SaveListViewModel>
+
+@{
+    ViewData["Title"] = "SaveList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    const string LOAD_BUTTON = "Load Save";
+    const string DELETE_BUTTON = "Delete Save";
+    const string DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete this?";
+}
+
+<h1>Saves</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.SaveName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Iteration)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AnimalCount)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.SaveName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Iteration)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AnimalCount)
+            </td>
+            <td class="d-flex gap-3">
+                <form asp-action="LoadWorld" method="post">
+                    <input type="hidden" name="saveId" value="@item.Id"/>
+                    <button type="submit" class="btn btn-secondary">@LOAD_BUTTON</button>
+                </form>
+                <form asp-action="DeleteSave"  onsubmit="return confirm('@DELETE_CONFIRM_MESSAGE')" method="post">
+                    <input type="hidden" name="saveId" value="@item.Id"/>
+                    <button type="submit" class="btn btn-outline-danger">@DELETE_BUTTON</button>
+                </form>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Savanna.Logic;
 using Savanna.WebUI.Models;
 using Savanna.WebUI.Services;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace Savanna.WebUI.Controllers
 {
@@ -11,15 +13,32 @@ namespace Savanna.WebUI.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly WorldService _worldService;
 
-        public HomeController(ILogger<HomeController> logger, WorldService worldService) 
+        public HomeController(ILogger<HomeController> logger, WorldService worldService)
         {
             _logger = logger;
             _worldService = worldService;
         }
 
+        [Authorize]
         public IActionResult Index()
         {
-            return View(_worldService.CurrentWorld);
+            _worldService.ClearWorld();
+            return View();
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult Game()
+        {
+            return View(_worldService.CurrentWorld.WorldToDisplayDTO());
+        }
+
+        [Authorize]
+        public IActionResult SaveList()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var saves = _worldService.GetUserSaves(userId);
+            return View(saves);
         }
 
         public IActionResult Privacy()
@@ -39,20 +58,32 @@ namespace Savanna.WebUI.Controllers
         [HttpPost]
         public IActionResult CreateWorld()
         {
-            _worldService.CreateNewWorld(10,20);
-            return RedirectToAction("Index");
+            _worldService.CreateNewWorld(12, 20);
+            return RedirectToAction("Game");
         }
-
 
         /// <summary>
         /// Handles world loading from existing save
         /// </summary>
+        [Authorize]
         [HttpPost]
-        public IActionResult LoadWorld()
+        public IActionResult LoadWorld(int saveId)
         {
-            //TODO: Create Loading instead of creating.
-            _worldService.CreateNewWorld(5,5);
-            return RedirectToAction("Index");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            _worldService.LoadWorld(saveId, userId);
+            return RedirectToAction("Game");
+        }
+
+        /// <summary>
+        /// Deletes save
+        /// </summary>
+        [Authorize]
+        [HttpPost]
+        public IActionResult DeleteSave(int saveId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            _worldService.DeleteSave(saveId, userId);
+            return RedirectToAction("SaveList");
         }
 
         /// <summary>
@@ -66,12 +97,14 @@ namespace Savanna.WebUI.Controllers
         }
 
         /// <summary>
-        /// Handles animal addition
+        /// Handles world saving
         /// </summary>
+        [Authorize]
         [HttpPost]
-        public IActionResult AddAnimal(char animalKey)
+        public IActionResult SaveWorld(string saveName)
         {
-            _worldService?.CurrentWorld.AddAnimal(animalKey);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            _worldService.SaveWorld(userId, saveName);
             return RedirectToAction("Index");
         }
     }

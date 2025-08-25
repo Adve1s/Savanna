@@ -6,9 +6,10 @@
     /// </summary>
     public partial class World
     {
-        private const char DecomposingSymbol = 'X';
-
         private Animal?[,] _field;
+        private int _iteration = 0;
+        private int _animalsInWorld = 0;
+        private (string Name,char CreationKey)[] _animalsAvailable;
         internal AnimalFactory AnimalFactory { get; }
 
         /// <summary>
@@ -30,6 +31,7 @@
             Width = width;
             _field = new Animal[Height, Width];
             AnimalFactory = new AnimalFactory();
+            _animalsAvailable = GetAvailableAnimalInfo();
         }
 
         /// <summary>
@@ -42,25 +44,6 @@
             Width = width;
             _field = new Animal[Height, Width];
             AnimalFactory = animalFactory;
-        }
-
-        /// <summary>
-        /// Gets the current field state
-        /// </summary>
-        /// <returns> Current field state in PositonOccupancy 2d array format</returns>
-        public char[,] GetCharField()
-        {
-            var returnField = new char[Height, Width];
-            for (int i = 0; i < Height; i++)
-            {
-                for (int j = 0; j < Width; j++)
-                {
-                    if (_field[i, j] != null)
-                        if (_field[i, j].IsAlive()) returnField[i, j] = _field[i, j].DisplayChar;
-                        else returnField[i, j] = DecomposingSymbol;
-                }
-            }
-            return returnField;
         }
 
         /// <summary>
@@ -88,9 +71,11 @@
                 catch (Exception ex)
                 {
                     _field[row, column] = null;
+                    _animalsInWorld--;
                     Console.WriteLine(string.Format(ErrorMessages.ANIMAL_CRASHED_MESSAGE, row, column, ex.Message));
                 }
             }
+            _iteration++;
 
         }
 
@@ -103,7 +88,11 @@
         {
             AnimalCoordinates animal = new AnimalCoordinates(row, column, _field[row, column]);
             if (!animal.Animal.IsDecomposed()) animal.Animal.Turn(this, animal);
-            else _field[row, column] = null;
+            else
+            {
+                _field[row, column] = null;
+                _animalsInWorld--;
+            }
         }
 
         /// <summary>
@@ -124,6 +113,7 @@
                     if (animal != null)
                     {
                         _field[randomRow, randomColumn] = animal;
+                        _animalsInWorld++;
                     }
                     break;
                 }
@@ -143,6 +133,7 @@
             if (place != null && _field[place.Value.Row, place.Value.Column] == null)
             {
                 _field[place.Value.Row, place.Value.Column] = animal;
+                _animalsInWorld++;
             }
 
         }
@@ -157,28 +148,6 @@
             int targetRow = animal.Row + Movement.Directions[direction].row;
             int targetColumn = animal.Column + Movement.Directions[direction].column;
             (_field[animal.Row, animal.Column], _field[targetRow, targetColumn]) = (_field[targetRow, targetColumn], _field[animal.Row, animal.Column]);
-        }
-
-        /// <summary>
-        /// Gets field
-        /// </summary>
-        /// <returns>Field</returns>
-        public Animal?[,] GetField() => _field;
-
-        /// <summary>
-        /// Get info of available animals.
-        /// </summary>
-        /// <returns>List of animal info objects</returns>
-        public (string Name,char CreationKey)[] GetAvailableAnimalInfo()
-        {
-            var keys = AnimalFactory.GetAvailableKeys();
-            var values = new (string,char)[keys.Length];
-            for (int keyId = 0; keyId < keys.Length; keyId++)
-            {
-                var animal = AnimalFactory.CreateAnimal(keys[keyId]);
-                values[keyId] = (animal.Name, animal.CreationKey);
-            }
-            return values;
         }
     }
 }

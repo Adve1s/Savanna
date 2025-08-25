@@ -17,15 +17,20 @@ namespace Savanna
         /// Displays current state of field
         /// </summary>
         /// <param name="field">Field information array</param>
-        public void DisplayField(char[,] field)
+        public void DisplayField(WorldDisplayDTO world)
         {
             Console.Clear();
             string finalField = string.Empty;
-            for (int i = 0; i < field.GetLength(0); i++)
+            for (int i = 0; i < world.Height; i++)
             {
-                for (int j = 0; j < field.GetLength(1); j++)
+                for (int j = 0; j < world.Width; j++)
                 {
-                    if (field[i, j] != '\0') finalField += field[i, j].ToString() + UIConstants.SpaceBetweenFields;
+                    var animal = world.AnimalField[i][j];
+                    if (animal != null)
+                    {
+                        if (animal.IsAlive) finalField += animal.DisplayChar.ToString() + UIConstants.SpaceBetweenFields;
+                        else finalField += UIConstants.DeadAnimalField + UIConstants.SpaceBetweenFields;
+                    }
                     else finalField += UIConstants.EmptyField.ToString() + UIConstants.SpaceBetweenFields;
                 }
                 finalField += "\n";

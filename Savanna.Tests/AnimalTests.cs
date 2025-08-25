@@ -20,18 +20,18 @@ namespace Savanna.Tests
             world.AddAnimal(thirdAnimal, new AnimalCoordinates(0, 1));
             var field = world.GetField();
 
-            animal.TestPossibleMates[secondAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
-            animal.TestPossibleMates[thirdAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            animal.TestPossibleMates[secondAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            animal.TestPossibleMates[thirdAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
             animal.TestAge = animal.TestChildrenBearingAge;
             animal.TestCurrentChildrenPause = animal.TestChildrenPauseTime;
 
-            secondAnimal.TestPossibleMates[animal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
-            secondAnimal.TestPossibleMates[thirdAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            secondAnimal.TestPossibleMates[animal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            secondAnimal.TestPossibleMates[thirdAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
             secondAnimal.TestAge = secondAnimal.TestChildrenBearingAge;
             secondAnimal.TestCurrentChildrenPause = secondAnimal.TestChildrenPauseTime;
 
-            thirdAnimal.TestPossibleMates[animal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
-            thirdAnimal.TestPossibleMates[secondAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            thirdAnimal.TestPossibleMates[animal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            thirdAnimal.TestPossibleMates[secondAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
             thirdAnimal.TestAge = thirdAnimal.TestChildrenBearingAge;
             thirdAnimal.TestCurrentChildrenPause = thirdAnimal.TestChildrenPauseTime;
 
@@ -398,8 +398,8 @@ namespace Savanna.Tests
         public void Mating_WhenNotEnoughtByEachOtherInOwnList_UpdatesTimeInOwnList()
         {
             var value = MatingSetup();
-            var secondAnimal = value.visibleArea[1, 0];
-            var thirdAnimal = value.visibleArea[0, 1];
+            var secondAnimal = value.visibleArea[1, 0].ID;
+            var thirdAnimal = value.visibleArea[0, 1].ID;
             value.animal.TestPossibleMates[secondAnimal] = 0;
             value.animal.TestPossibleMates[thirdAnimal] = 0;
 
@@ -419,8 +419,8 @@ namespace Savanna.Tests
             var value = MatingSetup();
             var secondAnimal = (TestAnimal)value.visibleArea[1, 0];
             var thirdAnimal = (TestAnimal)value.visibleArea[0, 1];
-            secondAnimal.TestPossibleMates[value.selfGlobaly.Animal] = 0;
-            thirdAnimal.TestPossibleMates[value.selfGlobaly.Animal] = 0;
+            secondAnimal.TestPossibleMates[value.selfGlobaly.Animal.ID] = 0;
+            thirdAnimal.TestPossibleMates[value.selfGlobaly.Animal.ID] = 0;
 
             value.animal.TestMating(value.world, value.visibleArea, value.selfLocaly, value.selfGlobaly);
             var afterField = value.world.GetField();
@@ -428,8 +428,8 @@ namespace Savanna.Tests
 
             Assert.IsNull(afterField[1, 1]);
             Assert.AreEqual(3, animalCount);
-            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal], 4);
-            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal], 4);
+            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal.ID], 4);
+            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal.ID], 4);
         }
 
         [TestMethod]
@@ -439,13 +439,13 @@ namespace Savanna.Tests
             var value = MatingSetup();
             var secondAnimal = (TestAnimal)value.visibleArea[1, 0];
             var thirdAnimal = (TestAnimal)value.visibleArea[0, 1];
-            value.animal.TestPossibleMates[secondAnimal] = 1;
+            value.animal.TestPossibleMates[secondAnimal.ID] = 1;
             thirdAnimal.TestIsAlive = false;
             value.visibleArea[0, 1] = null;
 
             value.animal.TestMating(value.world, value.visibleArea, value.selfLocaly, value.selfGlobaly);
 
-            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal], 2);
+            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal.ID], 2);
             CollectionAssert.DoesNotContain(value.animal.TestPossibleMates.Keys.ToList(), thirdAnimal);
 
             thirdAnimal.TestIsAlive = true;
@@ -456,7 +456,7 @@ namespace Savanna.Tests
             value.animal.TestMating(value.world, value.visibleArea, value.selfLocaly, value.selfGlobaly);
 
             CollectionAssert.DoesNotContain(value.animal.TestPossibleMates.Keys.ToList(), secondAnimal);
-            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal], 1);
+            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal.ID], 1);
         }
         #endregion
 
