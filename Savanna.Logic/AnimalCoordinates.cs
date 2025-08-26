@@ -39,16 +39,5 @@ namespace Savanna.Logic
             Column = column;
             Animal = animal;
         }
-
-        /// <summary>
-        /// Update position
-        /// </summary>
-        /// <param name="row">row of position</param>
-        /// <param name="column">column of position</param>
-        public void Update(int row, int column)
-        {
-            Row = row;
-            Column = column;
-        }
     }
 }

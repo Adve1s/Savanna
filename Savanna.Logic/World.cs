@@ -44,6 +44,7 @@
             Width = width;
             _field = new Animal[Height, Width];
             AnimalFactory = animalFactory;
+            _animalsAvailable = GetAvailableAnimalInfo();
         }
 
         /// <summary>

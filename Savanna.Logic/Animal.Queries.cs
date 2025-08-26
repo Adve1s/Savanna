@@ -117,7 +117,7 @@ namespace Savanna.Logic
                 Offsprings = _offsprings,
                 Age = _age,
                 CurrentChildrenPause = _currentChildrenPause,
-                PossibleMates = _possibleMates,
+                PossibleMates = new Dictionary<int, int>(_possibleMates),
                 CreationKey = CreationKey,
             };
         }
