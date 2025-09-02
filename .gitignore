@@ -5,3 +5,8 @@
 
 *.user
 *.suo
+
+/Savanna.WebUI/appsettings.Development.json
+/Savanna.WebUI/Properties/launchSettings.json
+/Savanna.WebUI/Properties/serviceDependencies.local.json
+/plugins/

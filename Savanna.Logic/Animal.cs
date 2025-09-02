@@ -6,6 +6,7 @@
     /// </summary>
     public abstract partial class Animal
     {
+        private static int id_counter = 0;
         // Constants
         protected const double DEFAULT_MAX_STAMINA = 25;
         protected const double DEFAULT_MAX_HEALTH = 25;
@@ -17,15 +18,16 @@
 
         // Animal settings used
         public abstract string Name { get; }
-        public abstract string DisplaySymbol { get; }
+        public abstract char DisplayChar { get; }
+        public abstract string DisplayEmoji { get; }
         public abstract char CreationKey { get; }
         protected abstract int DefaultSpeed { get; }
         protected abstract int DefaultVision { get; }
         protected abstract int DefaultEndurance { get; }
         protected abstract int DefaultDefence { get; }
 
-        protected abstract double MaxStamina { get; }
-        protected abstract double MaxHealth { get; }
+        public abstract double MaxStamina { get; }
+        public abstract double MaxHealth { get; }
 
         protected abstract int RoundsToDecompose { get; }
         protected abstract double PerRoundHealthDeduction { get; }
@@ -42,9 +44,16 @@
 
         protected bool _isAlive = true;
         protected int _roundsDead = 0;
+        protected int _offsprings = 0;
         protected double _age = 0;
         protected double _currentChildrenPause = 0;
-        protected Dictionary<Animal, int> _possibleMates = new Dictionary<Animal, int>();
+        private int _id = id_counter++;
+        protected Dictionary<int, int> _possibleMates = new Dictionary<int, int>();
+
+        /// <summary>
+        /// Gets animal id
+        /// </summary>
+        public int ID => _id;
 
         /// <summary>
         /// Gets animal current stamina
@@ -111,7 +120,7 @@
                 _currentChildrenPause += TIME_PER_ROUND;
                 _age += TIME_PER_ROUND;
                 Health -= PerRoundHealthDeduction;
-                if (Health <= 0 || _age > MaxAgeLimit) Die();
+                if (Health <= 0 || _age > MaxAgeLimit) Death();
             }
             else _roundsDead++;
         }
@@ -129,7 +138,7 @@
         /// <summary>
         /// Animal dies
         /// </summary>
-        protected void Die() => _isAlive = false;
+        protected void Death() => _isAlive = false;
 
         /// <summary>
         /// Animal gets damaged
@@ -138,7 +147,7 @@
         public void Damage(double damageDone)
         {
             Health -= damageDone;
-            if (Health <= 0) Die();
+            if (Health <= 0) Death();
         }
 
         /// <summary>
@@ -182,11 +191,14 @@
         /// </summary>
         /// <param name="world">Where new animal will be added</param>
         /// <param name="self">Parent</param>
-        private void Mate(World world, AnimalCoordinates self)
+        private void Birth(World world, AnimalCoordinates self)
         {
             var direction = Movement.RandomDirection(Movement.GetValidDirections(world.GetField(), self));
-            if (direction != null) world.AddAnimal(world.AnimalFactory.CreateAnimal(CreationKey),
-                new AnimalCoordinates(self.Row + Movement.Directions[(Direction)direction].row, self.Column + Movement.Directions[(Direction)direction].column));
+            if (direction != null)
+            {
+                world.AddAnimal(world.AnimalFactory.CreateAnimal(CreationKey), new AnimalCoordinates(self.Row + Movement.Directions[(Direction)direction].row, self.Column + Movement.Directions[(Direction)direction].column));
+                _offsprings += 1;
+            }
             _possibleMates.Clear();
             _currentChildrenPause = 0;
         }
@@ -233,13 +245,16 @@
             visibleArea[selfLocaly.Row, selfLocaly.Column] = null;
             var mates = GetAnimalByName(visibleArea, Name);
             mates = FilterCloseEnoughMates(mates, selfLocaly);
-            var closeMates = mates.Select(animal => animal.Animal).ToHashSet();
-            foreach (var animal in closeMates)
+            var closeMates = mates.Select(animal => animal.Animal.ID).ToHashSet();
+            foreach (var animalId in closeMates)
             {
-                _possibleMates[animal] = _possibleMates.GetValueOrDefault(animal, 0) + 1;
-                if (_possibleMates[animal] >= ROUNDS_TO_REPRODUCE && animal._possibleMates.ContainsKey(this) && animal._possibleMates[this] >= ROUNDS_TO_REPRODUCE)
+                _possibleMates[animalId] = _possibleMates.GetValueOrDefault(animalId, 0) + 1;
+                (int? row, int? column) = world.GetAnimalPositionByID(animalId);
+                Animal? animal = null;
+                if (row != null && column != null) animal = world.GetField()[(int)row, (int)column];
+                if (_possibleMates[animalId] >= ROUNDS_TO_REPRODUCE && animal._possibleMates.ContainsKey(ID) && animal._possibleMates[ID] >= ROUNDS_TO_REPRODUCE)
                 {
-                    Mate(world, selfGlobaly);
+                    Birth(world, selfGlobaly);
                     return;
                 }
             }

@@ -14,7 +14,8 @@ namespace Savanna
         /// <summary>
         /// Field position representations
         /// </summary>
-        public const string EmptyField = ".";
+        public const char EmptyField = '.';
+        public const char DeadAnimalField = 'X';
         public const string SpaceBetweenFields = " ";
 
         /// <summary>

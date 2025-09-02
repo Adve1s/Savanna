@@ -5,7 +5,8 @@ namespace Savanna.Tests
     [TestClass]
     public sealed class WorldTests
     {
-        private static AnimalFactory _animalFactory = new AnimalFactory();
+        private static PluginManager pluginManager = new PluginManager(Directory.GetCurrentDirectory(), path => new[] { "oneFile.dll" }, file => typeof(TestAnimal).Assembly);
+        private static AnimalFactory _animalFactory = new AnimalFactory(pluginManager);
         #region Core World Methods
         [TestMethod]
         public void NextTurn_WhenNoAnimalExists_DoesntCrash()
@@ -192,6 +193,162 @@ namespace Savanna.Tests
 
             Assert.AreEqual(fullGrid[11, 17], result.visibleArea[result.self.Row + 1, result.self.Column+2]);
             CollectionAssert.IsSubsetOf(result.visibleArea, fullGrid);
+        }
+
+        [TestMethod]
+        public void GetAnimalCardDTOByPosition_WhenAnimalExists_ReturnsAnimalCardDTO()
+        {
+            var world = new World(_animalFactory);
+            var animal = new TestAnimal();
+            world.AddAnimal(animal, new AnimalCoordinates(5, 0));
+
+            var animalDTO = world.GetAnimalCardDTOByPosition(5, 0);
+
+            Assert.IsNotNull(animalDTO);
+            Assert.AreEqual(animal.ID, animalDTO.ID);
+            Assert.AreEqual("Test", animalDTO.Name);
+        }
+
+        [TestMethod]
+        public void GetAnimalCardDTOByPosition_WhenAnimalDoesntExist_ReturnsNull()
+        {
+            var world = new World(_animalFactory);
+
+            var animalDTO = world.GetAnimalCardDTOByPosition(5, 0);
+
+            Assert.IsNull(animalDTO);
+        }
+
+        [TestMethod]
+        public void GetAnimalPositionByID_WhenAnimalExists_ReturnsAnimalPosition()
+        {
+            var world = new World(_animalFactory);
+            var animal = new TestAnimal();
+            world.AddAnimal(animal, new AnimalCoordinates(5, 0));
+
+            var coordinates = world.GetAnimalPositionByID(animal.ID);
+
+            Assert.IsNotNull(coordinates.Item1);
+            Assert.IsNotNull(coordinates.Item2);
+            Assert.AreEqual(coordinates.Item1, 5);
+            Assert.AreEqual(coordinates.Item2, 0);
+        }
+
+        [TestMethod]
+        public void GetAnimalPositionByID_WhenAnimalDoesntExist_ReturnsNullNullPosition()
+        {
+            var world = new World(_animalFactory);
+
+            var coordinates = world.GetAnimalPositionByID(0);
+
+            Assert.IsNull(coordinates.Item1);
+            Assert.IsNull(coordinates.Item2);
+        }
+
+        [TestMethod]
+        public void GetAnimalPositionByID_WhenAnimalDoesntExistInThatWorld_ReturnsNullNullPosition()
+        {
+            var world = new World(_animalFactory);
+            var anotherWorld = new World(_animalFactory);
+            var animal = new TestAnimal();
+            anotherWorld.AddAnimal(animal, new AnimalCoordinates(10, 0));
+
+            var coordinates = world.GetAnimalPositionByID(animal.ID);
+
+            Assert.IsNull(coordinates.Item1);
+            Assert.IsNull(coordinates.Item2);
+        }
+
+        [TestMethod]
+        public void WorldToDisplayDTO_WhenUsed_ReturnsTheWorldRepresenatation()
+        {
+            var world = new World(_animalFactory,7,9);
+            world.NextTurn();
+            world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0,1));
+            world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0,5));
+
+            var representation = world.WorldToDisplayDTO();
+
+            Assert.IsNotNull(representation);
+            Assert.AreEqual(7, representation.Height);
+            Assert.AreEqual(9, representation.Width);
+            Assert.AreEqual(1, representation.Iteration);
+            Assert.AreEqual(2, representation.AnimalsInWorld);
+            Assert.AreEqual(1, representation.AnimalsAvailable.Length);
+            Assert.IsNotNull(representation.AnimalField[0][1]);
+            Assert.AreEqual('T', representation.AnimalField[0][1].DisplayChar);
+            Assert.AreEqual("👽", representation.AnimalField[0][1].DisplayEmoji);
+            Assert.IsTrue(representation.AnimalField[0][1].IsAlive);
+            Assert.IsNotNull(representation.AnimalField[0][5]);
+            Assert.IsNull(representation.AnimalField[0][0]);
+        }
+
+        [TestMethod]
+        public void WorldToSaveDTO_WhenUsed_ReturnsTheWorldSaveData()
+        {
+            var world = new World(_animalFactory, 7, 9);
+            world.NextTurn();
+            var animal = new TestAnimal();
+            world.AddAnimal(animal, new AnimalCoordinates(0, 1));
+            world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0, 8));
+            animal.Damage(10);
+            animal.TestChangeStamina(-10);
+            animal.TestAge = 6.7;
+            animal.TestCurrentChildrenPause = 5.6;
+            animal.TestPossibleMates = new Dictionary<int, int> { { 1, 3 } };
+
+            var representation = world.WorldToSaveDTO();
+
+            Assert.IsNotNull(representation);
+            Assert.AreEqual(7, representation.Height);
+            Assert.AreEqual(9, representation.Width);
+            Assert.AreEqual(1, representation.Iteration);
+            Assert.AreEqual(2, representation.AnimalsInWorld);
+            Assert.IsNotNull(representation.Field[0][1]);
+            Assert.AreEqual(40, representation.Field[0][1].Health);
+            Assert.AreEqual(65, representation.Field[0][1].Stamina);
+            Assert.AreEqual(6.7, representation.Field[0][1].Age);
+            Assert.AreEqual(5.6, representation.Field[0][1].CurrentChildrenPause);
+            Assert.AreEqual(animal.ID, representation.Field[0][1].Id);
+            Assert.AreEqual(0, representation.Field[0][1].Offsprings);
+            Assert.AreEqual(0, representation.Field[0][1].RoundsDead);
+            Assert.IsTrue(representation.Field[0][1].IsAlive);
+            CollectionAssert.AreEquivalent(new Dictionary<int, int> { { 1,3 } }, representation.Field[0][1].PossibleMates);
+            Assert.IsNotNull(representation.Field[0][8]);
+            Assert.IsNull(representation.Field[0][0]);
+            Assert.AreEqual(2, representation.Field.SelectMany(row => row).Count(x => x != null));
+        }
+
+        [TestMethod]
+        public void SetUpWorldFromSaveDTO_WhenUsed_ReturnsRecreatedWorld()
+        {
+            var world = new World(_animalFactory, 7, 9);
+            world.NextTurn();
+            var animal = new TestAnimal();
+            world.AddAnimal(animal, new AnimalCoordinates(0, 1));
+            world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0, 8));
+            animal.Damage(10);
+            animal.TestChangeStamina(-10);
+            animal.TestAge = 6.7;
+            animal.TestCurrentChildrenPause = 5.6;
+            animal.TestPossibleMates = new Dictionary<int, int> { { 1, 3 } };
+
+            var worldDTO = world.WorldToSaveDTO();
+            var recreatedWorld = new World(_animalFactory);
+            recreatedWorld.SetUpWorldFromSaveDTO(worldDTO);
+            var field = recreatedWorld.GetField();
+
+            Assert.IsNotNull(recreatedWorld);
+            Assert.AreEqual(7, recreatedWorld.Height);
+            Assert.AreEqual(9, recreatedWorld.Width);
+            Assert.AreEqual(2, field.Cast<Animal>().Count(x => x != null));
+            Assert.IsNotNull(field[0,1]);
+            Assert.AreEqual(40, field[0,1].Health);
+            Assert.AreEqual(65, field[0,1].Stamina);
+            Assert.AreEqual(animal.ID, field[0,1].ID);
+            Assert.IsTrue(field[0,1].IsAlive());
+            Assert.IsNotNull(field[0, 8]);
+            Assert.IsNull(field[0, 0]);
         }
         #endregion
     }

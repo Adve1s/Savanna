@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    const string CREATE_WORLD_BUTTON = "Create New World";
+    const string LOAD_WORLD_BUTTON = "Load Saved World";
+}
+
+<div class="text-center">
+   <h1>Animal Simulation</h1>
+    <p>Choose an option to begin:</p>
+    <form asp-action="CreateWorld" method="post">
+        <button type="submit" class="btn btn-secondary">@CREATE_WORLD_BUTTON</button>
+    </form>
+    <br />
+    <form asp-action="SaveList" method="get">
+        <button type="submit" class="btn btn-secondary">@LOAD_WORLD_BUTTON</button>
+    </form>
+</div>

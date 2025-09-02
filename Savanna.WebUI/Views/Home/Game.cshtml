@@ -1,0 +1,120 @@
+﻿
+@model Savanna.Logic.WorldDisplayDTO
+@{
+    ViewData["Title"] = "Game";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    const string NEW_WORLD_BUTTON = "Start New World";
+    const string SAVE_GAME_BUTTON = "Save World";
+    const string SIMULATION_BOARD_ID = "simulationBoard";
+    const string TOGGLE_BUTTON_ID = "displayToggle";
+    const string PAUSE_BUTTON_ID = "pauseButton";
+    const string ANIMAL_COUNT_FIELD = "animalCount";
+    const string ITERATION_FIELD = "iterationField";
+    const string CELL_ID = "cell-{0}-{1}";
+    const string ADD_ANIMAL_BUTTON = "Add {0} ({1})";
+    var ANIMAL_INFO_CARD_IDS = new
+    {
+        Card = "animalInfoCard",
+        Icon = "animalIcon",
+        Name = "animalName",
+        Stats = "animalStats",
+        HealthBar = "animalHealthBar",
+        HealthText = "animalHealthText",
+        StaminaBar = "animalStaminaBar",
+        StaminaText = "animalStaminaText",
+        Age = "animalAge",
+        Offsprings = "animalOffsprings"
+    };
+    const string SAVE_GAME_LABEL = "Save Name:";
+    const string SAVE_GAME_PLACEHOLDER = "(Optional)";
+    const string ITERATION_TEXT = "Iteration: ";
+    const string ANIMAL_COUNT_TEXT = "Animals in world: ";
+}
+<div class="container text-center">
+    <h1>World Simulation</h1>
+    <div class="row">
+        <div class="d-flex flex-column col-3 gap-3 mt-3 text-start" style="min-width: 250px">
+            <button id="@PAUSE_BUTTON_ID" onclick="togglePause()" class="btn btn-outline-primary w-100"></button>
+            <button id="@TOGGLE_BUTTON_ID" onclick="toggleDisplayMode()" class="btn btn-outline-success w-100"></button>
+            @foreach (var animal in Model.AnimalsAvailable)
+            {
+                <button onclick="addAnimal('@animal.CreationKey')" class="btn btn-outline-secondary w-100">@String.Format(ADD_ANIMAL_BUTTON, animal.Name, animal.CreationKey)</button>
+            }
+            <form asp-action="SaveWorld" method="post">
+                <div>
+                    <label for="saveName">@SAVE_GAME_LABEL</label>
+                    <input type="text" name="saveName" class="w-100" placeholder="@SAVE_GAME_PLACEHOLDER"/>
+                </div>
+                <button type="submit" class="btn btn-secondary mt-1 w-100" onclick="isSaved = true">@SAVE_GAME_BUTTON</button>
+            </form>
+        </div>
+        <div class="col-6 overflow-auto d-flex justify-content-center align-items-center">
+            <table id="@SIMULATION_BOARD_ID">
+                @for (int row = 0; row < Model.Height; row++)
+                {
+                    <tr>
+                        @for (int column = 0; column < Model.Width; column++)
+                        {
+                            <td id="@String.Format(CELL_ID, row, column)" onclick="handleCellClick(@row, @column)" style="border: 1px solid #ccc; width:30px; height:30px; text-align:center">
+                            </td>
+                        }
+                    </tr>
+                }
+            </table>
+        </div>
+        <div class="col-3 mt-3 text-start" style="min-width:250px">
+            <div>@ITERATION_TEXT <span id="@ITERATION_FIELD"></span></div>
+            <div>@ANIMAL_COUNT_TEXT<span id="@ANIMAL_COUNT_FIELD"></span></div>
+            <div id="animalInfoCard" style="display:none;" class="card w-100 mt-3">
+                <div class="card-header d-flex justify-content-center gap-1">
+                    <h3 id="@ANIMAL_INFO_CARD_IDS.Name"></h3>
+                    <h3 id="@ANIMAL_INFO_CARD_IDS.Icon"></h3>
+                </div>
+                <div class="row card-body text-start" id="@ANIMAL_INFO_CARD_IDS.Stats">
+                    <div class="col-5">Health:</div>
+                    <div class="col-7">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" id="@ANIMAL_INFO_CARD_IDS.HealthBar" style="width: 0%"></div>
+                        </div>
+                        <small id="@ANIMAL_INFO_CARD_IDS.HealthText" class="text-muted"></small>
+                    </div>
+                    <div class="col-5">Stamina:</div>
+                    <div class="col-7">
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" id="@ANIMAL_INFO_CARD_IDS.StaminaBar" style="width: 0%"></div>
+                        </div>
+                        <small id="@ANIMAL_INFO_CARD_IDS.StaminaText" class="text-muted"></small>
+                    </div>
+                    <div class="col-5">Age:</div><div class="col-7" id="@ANIMAL_INFO_CARD_IDS.Age"></div>
+                    <div class="col-5">Offsprings:</div><div class="col-7" id="@ANIMAL_INFO_CARD_IDS.Offsprings"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="margin-top:20px;">
+        <form asp-action="ClearWorld" method="post">
+            <button type="submit" class="btn btn-secondary">@NEW_WORLD_BUTTON</button>
+        </form>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+<script id="simulation-config" type="application/json">
+    @Html.Raw(Json.Serialize( new {
+        hubUrl = Savanna.WebUI.Hubs.GameHub.HUB_URL,
+                    gameUpdate = Savanna.WebUI.Hubs.GameHub.GAME_UPDATE_MESSAGE,
+                    addAnimal = Savanna.WebUI.Hubs.GameHub.ADD_ANIMAL_MESSAGE,
+                    togglePause = Savanna.WebUI.Hubs.GameHub.TOGGLE_PAUSE_MESSAGE,
+                    handleCellClick = Savanna.WebUI.Hubs.GameHub.HANDLE_CELL_CLICK_MESSAGE,
+                    handleCellUnclick = Savanna.WebUI.Hubs.GameHub.HANDLE_CELL_UNCLICK_MESSAGE,
+                    getStartState = Savanna.WebUI.Hubs.GameHub.GET_START_STATE_MESSAGE,
+                    tableId = SIMULATION_BOARD_ID,
+                    toggleId = TOGGLE_BUTTON_ID,
+                    pauseId = PAUSE_BUTTON_ID,
+                    cellIdFormat = CELL_ID,
+                    dataCardInfo = ANIMAL_INFO_CARD_IDS,
+                    iterationId = ITERATION_FIELD,
+                    animalCountId = ANIMAL_COUNT_FIELD,
+            }))
+</script>
+<script src="~/js/simulation.js"></script>
+

@@ -74,5 +74,73 @@ namespace Savanna.Logic
         /// <param name="gain">Gain to add to current value</param>
         /// <returns>Bool value answering if stat is above max</returns>
         protected bool IsStatAboveMax(double maxValue, double currentValue, double gain) => currentValue + gain > maxValue;
+
+        /// <summary>
+        /// Parses Animal to DataCardDTO
+        /// </summary>
+        /// <returns>AnimalCardInfoDTO which contains needed animal info</returns>
+        public AnimalCardInfoDTO AnimalToCardDTO()
+        {
+            return new AnimalCardInfoDTO
+            {
+                Health = Health,
+                MaxHealth = MaxHealth,
+                Stamina = Stamina,
+                MaxStamina = MaxStamina,
+                IsAlive = _isAlive,
+                IsDecomposed = IsDecomposed(),
+                Age = _age,
+                DisplayEmoji = DisplayEmoji,
+                Name = Name,
+                Offsprings = _offsprings,
+                ID = ID,
+            };
+        }
+
+        /// <summary>
+        /// Parses Animal to AnimalSaveDTO
+        /// </summary>
+        /// <returns>AnimalSaveDTO with all the needed functionality for animal saving and recreation</returns>
+        public virtual AnimalSaveDTO AnimalToSaveDTO()
+        {
+            return new AnimalSaveDTO
+            {
+                Id = ID,
+                Stamina = Stamina,
+                Health = Health,
+                Vision = Vision,
+                Speed = Speed,
+                Endurance = Endurance,
+                Defence = Defence,
+                IsAlive = _isAlive,
+                RoundsDead = _roundsDead,
+                Offsprings = _offsprings,
+                Age = _age,
+                CurrentChildrenPause = _currentChildrenPause,
+                PossibleMates = new Dictionary<int, int>(_possibleMates),
+                CreationKey = CreationKey,
+            };
+        }
+
+        /// <summary>
+        /// Sets animal up from AnimalSaveDTO
+        /// </summary>
+        /// <param name="animalSaveDTO">Animal stats to set up</param>
+        public virtual void SetUpAnimalFromSaveDTO(AnimalSaveDTO animalSaveDTO)
+        {
+            Stamina = animalSaveDTO.Stamina;
+            Health = animalSaveDTO.Health;
+            Vision = animalSaveDTO.Vision;
+            Speed = animalSaveDTO.Speed;
+            Endurance = animalSaveDTO.Endurance;
+            Defence = animalSaveDTO.Defence;
+            _isAlive = animalSaveDTO.IsAlive;
+            _roundsDead = animalSaveDTO.RoundsDead;
+            _offsprings = animalSaveDTO.Offsprings;
+            _age = animalSaveDTO.Age;
+            _currentChildrenPause = animalSaveDTO.CurrentChildrenPause;
+            _possibleMates = animalSaveDTO.PossibleMates;
+            _id = animalSaveDTO.Id;
+        }
     }
 }

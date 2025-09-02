@@ -12,12 +12,12 @@ namespace Savanna.Logic
     /// </summary>
     internal class AnimalFactory
     {
-        private Dictionary<char, Func<Animal>> _creators = new Dictionary<char, Func<Animal>>();
+        private Dictionary<char, (Func<Animal> Creator, string AnimalName)> _animals = new Dictionary<char, (Func<Animal> Creator, string AnimalName)>();
 
         public AnimalFactory(PluginManager pluginManager = null)
         {
             var usedManager = pluginManager ?? new PluginManager();
-            _creators = usedManager.LoadAndValidatePlugins();
+            _animals = usedManager.LoadAndValidatePlugins();
         }
 
         /// <summary>
@@ -25,6 +25,12 @@ namespace Savanna.Logic
         /// </summary>
         /// <param name="key">Key to search animal by</param>
         /// <returns>New animal object</returns>
-        public Animal? CreateAnimal(char key) => _creators.ContainsKey(key) ? _creators[key]() : null;
+        public Animal? CreateAnimal(char key) => _animals.ContainsKey(key) ? _animals[key].Creator() : null;
+
+        /// <summary>
+        /// Get available keys
+        /// </summary>
+        /// <returns>array of animal keys.</returns>
+        public char[] GetAvailableKeys() => _animals.Keys.ToArray();
     }
 }

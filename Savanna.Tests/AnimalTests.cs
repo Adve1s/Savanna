@@ -6,9 +6,11 @@ namespace Savanna.Tests
     [TestClass]
     public sealed class AnimalTests
     {
+        private static PluginManager pluginManager = new PluginManager(Directory.GetCurrentDirectory(), path => new[] { "oneFile.dll" }, file => typeof(TestAnimal).Assembly);
+        private static AnimalFactory _animalFactory = new AnimalFactory(pluginManager);
         private (World world, Animal?[,] visibleArea, AnimalCoordinates selfLocaly, AnimalCoordinates selfGlobaly, TestAnimal animal) MatingSetup()
         {
-            var world = new World(100, 100);
+            var world = new World(_animalFactory, 100, 100);
 
             var animal = new TestAnimal();
             var secondAnimal = new TestAnimal();
@@ -18,18 +20,18 @@ namespace Savanna.Tests
             world.AddAnimal(thirdAnimal, new AnimalCoordinates(0, 1));
             var field = world.GetField();
 
-            animal.TestPossibleMates[secondAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
-            animal.TestPossibleMates[thirdAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            animal.TestPossibleMates[secondAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            animal.TestPossibleMates[thirdAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
             animal.TestAge = animal.TestChildrenBearingAge;
             animal.TestCurrentChildrenPause = animal.TestChildrenPauseTime;
 
-            secondAnimal.TestPossibleMates[animal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
-            secondAnimal.TestPossibleMates[thirdAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            secondAnimal.TestPossibleMates[animal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            secondAnimal.TestPossibleMates[thirdAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
             secondAnimal.TestAge = secondAnimal.TestChildrenBearingAge;
             secondAnimal.TestCurrentChildrenPause = secondAnimal.TestChildrenPauseTime;
 
-            thirdAnimal.TestPossibleMates[animal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
-            thirdAnimal.TestPossibleMates[secondAnimal] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            thirdAnimal.TestPossibleMates[animal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
+            thirdAnimal.TestPossibleMates[secondAnimal.ID] = TestAnimal.TEST_ROUNDS_TO_REPRODUCE;
             thirdAnimal.TestAge = thirdAnimal.TestChildrenBearingAge;
             thirdAnimal.TestCurrentChildrenPause = thirdAnimal.TestChildrenPauseTime;
 
@@ -45,7 +47,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Turn_WhenNoMatingAndAlive_AnimalDoesItsActionAndUpdatesStats()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             var startHealth = animal.Health;
@@ -79,7 +81,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Turn_WhenDead_UpdaresRoundsDead()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             animal.TestIsAlive = false;
@@ -282,7 +284,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Move_WhenSuccess_TestMovesAnimal()
         {
-            var world = new World(10, 15);
+            var world = new World(_animalFactory, 10, 15);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(9, 14));
 
@@ -295,7 +297,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Move_WhenNoDirection_TestRests()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             var startStamina = animal.Stamina;
@@ -309,7 +311,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void Move_WhenNoStamina_TestMovesAnimal()
         {
-            var world = new World(10, 10);
+            var world = new World(_animalFactory, 10, 10);
             var animal = new TestAnimal();
             world.AddAnimal(animal, new AnimalCoordinates(0, 0));
             animal.TestChangeStamina(-animal.Stamina - 1);
@@ -396,8 +398,8 @@ namespace Savanna.Tests
         public void Mating_WhenNotEnoughtByEachOtherInOwnList_UpdatesTimeInOwnList()
         {
             var value = MatingSetup();
-            var secondAnimal = value.visibleArea[1, 0];
-            var thirdAnimal = value.visibleArea[0, 1];
+            var secondAnimal = value.visibleArea[1, 0].ID;
+            var thirdAnimal = value.visibleArea[0, 1].ID;
             value.animal.TestPossibleMates[secondAnimal] = 0;
             value.animal.TestPossibleMates[thirdAnimal] = 0;
 
@@ -417,8 +419,8 @@ namespace Savanna.Tests
             var value = MatingSetup();
             var secondAnimal = (TestAnimal)value.visibleArea[1, 0];
             var thirdAnimal = (TestAnimal)value.visibleArea[0, 1];
-            secondAnimal.TestPossibleMates[value.selfGlobaly.Animal] = 0;
-            thirdAnimal.TestPossibleMates[value.selfGlobaly.Animal] = 0;
+            secondAnimal.TestPossibleMates[value.selfGlobaly.Animal.ID] = 0;
+            thirdAnimal.TestPossibleMates[value.selfGlobaly.Animal.ID] = 0;
 
             value.animal.TestMating(value.world, value.visibleArea, value.selfLocaly, value.selfGlobaly);
             var afterField = value.world.GetField();
@@ -426,8 +428,8 @@ namespace Savanna.Tests
 
             Assert.IsNull(afterField[1, 1]);
             Assert.AreEqual(3, animalCount);
-            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal], 4);
-            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal], 4);
+            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal.ID], 4);
+            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal.ID], 4);
         }
 
         [TestMethod]
@@ -437,13 +439,13 @@ namespace Savanna.Tests
             var value = MatingSetup();
             var secondAnimal = (TestAnimal)value.visibleArea[1, 0];
             var thirdAnimal = (TestAnimal)value.visibleArea[0, 1];
-            value.animal.TestPossibleMates[secondAnimal] = 1;
+            value.animal.TestPossibleMates[secondAnimal.ID] = 1;
             thirdAnimal.TestIsAlive = false;
             value.visibleArea[0, 1] = null;
 
             value.animal.TestMating(value.world, value.visibleArea, value.selfLocaly, value.selfGlobaly);
 
-            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal], 2);
+            Assert.AreEqual(value.animal.TestPossibleMates[secondAnimal.ID], 2);
             CollectionAssert.DoesNotContain(value.animal.TestPossibleMates.Keys.ToList(), thirdAnimal);
 
             thirdAnimal.TestIsAlive = true;
@@ -454,7 +456,7 @@ namespace Savanna.Tests
             value.animal.TestMating(value.world, value.visibleArea, value.selfLocaly, value.selfGlobaly);
 
             CollectionAssert.DoesNotContain(value.animal.TestPossibleMates.Keys.ToList(), secondAnimal);
-            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal], 1);
+            Assert.AreEqual(value.animal.TestPossibleMates[thirdAnimal.ID], 1);
         }
         #endregion
 
@@ -462,7 +464,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenEmpty_ReturnsNoAnimalCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             var field = world.GetField();
             var animal = new TestAnimal();
 
@@ -474,13 +476,13 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenOnlyWrongType_ReturnsNoAnimalCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             var wrongAnimal = new TestAnimal();
             wrongAnimal.UpdateName("Wrong");
             var wrongAnimal2 = new TestAnimal();
             wrongAnimal2.UpdateName("WrongToo");
-            world.AddAnimal(wrongAnimal, new AnimalCoordinates(0,0));
-            world.AddAnimal(wrongAnimal2, new AnimalCoordinates(0,2));
+            world.AddAnimal(wrongAnimal, new AnimalCoordinates(0, 0));
+            world.AddAnimal(wrongAnimal2, new AnimalCoordinates(0, 2));
             var field = world.GetField();
             var animal = new TestAnimal();
 
@@ -492,7 +494,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenOnlyRightTypeExists_ReturnsCorrectCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0, 0));
             world.AddAnimal(new TestAnimal(), new AnimalCoordinates(1, 0));
             var field = world.GetField();
@@ -510,7 +512,7 @@ namespace Savanna.Tests
         [TestMethod]
         public void TestGetAnimalByName_WhenRightAndWrongTypeExists_ReturnsCorrectCoordinates()
         {
-            var world = new World(5, 5);
+            var world = new World(_animalFactory, 5, 5);
             var wrongAnimal = new TestAnimal();
             wrongAnimal.UpdateName("Wrong");
             world.AddAnimal(new TestAnimal(), new AnimalCoordinates(0, 0));
@@ -753,6 +755,300 @@ namespace Savanna.Tests
             var value = animal.TestIsStatAboveMax(10, 5, 3.5);
 
             Assert.IsFalse(value);
+        }
+
+        [TestMethod]
+        public void AnimalToCardDTO_WhenNewAnimal_ReturnsDTOWIthDefaultStats()
+        {
+            var animal = new TestAnimal();
+
+            var animalDTO = animal.AnimalToCardDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.AreEqual(50, animalDTO.Health);
+            Assert.AreEqual(75, animalDTO.Stamina);
+            Assert.AreEqual(50, animalDTO.MaxHealth);
+            Assert.AreEqual(75, animalDTO.MaxStamina);
+            Assert.AreEqual(true, animalDTO.IsAlive);
+            Assert.AreEqual(false, animalDTO.IsDecomposed);
+            Assert.AreEqual(0, animalDTO.Age);
+            Assert.AreEqual("👽", animalDTO.DisplayEmoji);
+            Assert.AreEqual("Test", animalDTO.Name);
+            Assert.AreEqual(0, animalDTO.Offsprings);
+            Assert.AreEqual(animal.ID, animalDTO.ID);
+        }
+
+        [TestMethod]
+        public void AnimalToCardDTO_WhenAnimalStatsChanges_ReturnsDTOWIthNewStats()
+        {
+            var animal = new TestAnimal();
+            animal.Damage(25);
+            animal.TestChangeStamina(-10);
+            animal.TestAge = 4.6;
+
+            var animalDTO = animal.AnimalToCardDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.AreEqual(25, animalDTO.Health);
+            Assert.AreEqual(65, animalDTO.Stamina);
+            Assert.AreEqual(50, animalDTO.MaxHealth);
+            Assert.AreEqual(75, animalDTO.MaxStamina);
+            Assert.AreEqual(true, animalDTO.IsAlive);
+            Assert.AreEqual(false, animalDTO.IsDecomposed);
+            Assert.AreEqual(4.6, animalDTO.Age);
+            Assert.AreEqual("👽", animalDTO.DisplayEmoji);
+            Assert.AreEqual("Test", animalDTO.Name);
+            Assert.AreEqual(0, animalDTO.Offsprings);
+            Assert.AreEqual(animal.ID, animalDTO.ID);
+        }
+
+        [TestMethod]
+        public void AnimalToCardDTO_WhenAnimalDead_ReturnsDTOWIthDeadAnimal()
+        {
+            var animal = new TestAnimal();
+            animal.Damage(int.MaxValue);
+            animal.TestAge = 5.4;
+            animal.TestRoundsDead = int.MaxValue;
+
+            var animalDTO = animal.AnimalToCardDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.IsTrue(animalDTO.Health < 0);
+            Assert.AreEqual(75, animalDTO.Stamina);
+            Assert.AreEqual(50, animalDTO.MaxHealth);
+            Assert.AreEqual(75, animalDTO.MaxStamina);
+            Assert.AreEqual(false, animalDTO.IsAlive);
+            Assert.AreEqual(true, animalDTO.IsDecomposed);
+            Assert.AreEqual(5.4, animalDTO.Age);
+            Assert.AreEqual("👽", animalDTO.DisplayEmoji);
+            Assert.AreEqual("Test", animalDTO.Name);
+            Assert.AreEqual(0, animalDTO.Offsprings);
+            Assert.AreEqual(animal.ID, animalDTO.ID);
+        }
+
+        [TestMethod]
+        public void AnimalToCardDTO_WhenMated_ReturnsAnimalWithOffspring()
+        {
+            var value = MatingSetup();
+            var animal = value.animal;
+
+            animal.Turn(value.world, new AnimalCoordinates(0, 0, animal));
+            var animalDTO = animal.AnimalToCardDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.IsTrue(animalDTO.Health < animalDTO.MaxHealth);
+            Assert.AreEqual(75, animalDTO.Stamina);
+            Assert.AreEqual(50, animalDTO.MaxHealth);
+            Assert.AreEqual(75, animalDTO.MaxStamina);
+            Assert.AreEqual(true, animalDTO.IsAlive);
+            Assert.AreEqual(false, animalDTO.IsDecomposed);
+            Assert.IsTrue(animalDTO.Age>0);
+            Assert.AreEqual("👽", animalDTO.DisplayEmoji);
+            Assert.AreEqual("Test", animalDTO.Name);
+            Assert.AreEqual(1, animalDTO.Offsprings);
+            Assert.AreEqual(animal.ID, animalDTO.ID);
+        }
+
+        [TestMethod]
+        public void AnimalToSaveDTO_WhenNewAnimal_ReturnsDTOWIthDefaultStats()
+        {
+            var animal = new TestAnimal();
+
+            var animalDTO = animal.AnimalToSaveDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.AreEqual(animal.ID, animalDTO.Id);
+            Assert.AreEqual(50, animalDTO.Health);
+            Assert.AreEqual(75, animalDTO.Stamina);
+            Assert.AreEqual(5, animalDTO.Vision);
+            Assert.AreEqual(3, animalDTO.Speed);
+            Assert.AreEqual(8, animalDTO.Endurance);
+            Assert.AreEqual(2, animalDTO.Defence);
+            Assert.AreEqual(true, animalDTO.IsAlive);
+            Assert.AreEqual(0, animalDTO.RoundsDead);
+            Assert.AreEqual(0, animalDTO.Offsprings);
+            Assert.AreEqual(0, animalDTO.Age);
+            Assert.AreEqual(0, animalDTO.CurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int, int>(), animalDTO.PossibleMates);
+            Assert.AreEqual('T', animalDTO.CreationKey);
+        }
+
+        [TestMethod]
+        public void AnimalToSaveDTO_WhenAnimalStatsChanges_ReturnsDTOWIthNewStats()
+        {
+            var animal = new TestAnimal();
+            animal.Damage(25);
+            animal.TestChangeStamina(-10);
+            animal.TestAge = 5.6;
+            animal.TestCurrentChildrenPause = 0.5;
+
+            var animalDTO = animal.AnimalToSaveDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.AreEqual(animal.ID, animalDTO.Id);
+            Assert.AreEqual(25, animalDTO.Health);
+            Assert.AreEqual(65, animalDTO.Stamina);
+            Assert.AreEqual(5, animalDTO.Vision);
+            Assert.AreEqual(3, animalDTO.Speed);
+            Assert.AreEqual(8, animalDTO.Endurance);
+            Assert.AreEqual(2, animalDTO.Defence);
+            Assert.AreEqual(true, animalDTO.IsAlive);
+            Assert.AreEqual(0, animalDTO.RoundsDead);
+            Assert.AreEqual(0, animalDTO.Offsprings);
+            Assert.AreEqual(5.6, animalDTO.Age);
+            Assert.AreEqual(0.5, animalDTO.CurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int, int>(), animalDTO.PossibleMates);
+            Assert.AreEqual('T', animalDTO.CreationKey);
+        }
+
+        [TestMethod]
+        public void AnimalToSaveDTO_WhenAnimalDead_ReturnsDTOWIthDeadAnimal()
+        {
+            var animal = new TestAnimal();
+            animal.Damage(65);
+            animal.TestChangeStamina(-10);
+            animal.TestAge = 5.6;
+            animal.TestCurrentChildrenPause = 0.5;
+
+            var animalDTO = animal.AnimalToSaveDTO();
+
+            Assert.IsNotNull(animalDTO);
+            Assert.AreEqual(animal.ID, animalDTO.Id);
+            Assert.AreEqual(-15, animalDTO.Health);
+            Assert.AreEqual(65, animalDTO.Stamina);
+            Assert.AreEqual(5, animalDTO.Vision);
+            Assert.AreEqual(3, animalDTO.Speed);
+            Assert.AreEqual(8, animalDTO.Endurance);
+            Assert.AreEqual(2, animalDTO.Defence);
+            Assert.AreEqual(false, animalDTO.IsAlive);
+            Assert.AreEqual(0, animalDTO.RoundsDead);
+            Assert.AreEqual(0, animalDTO.Offsprings);
+            Assert.AreEqual(5.6, animalDTO.Age);
+            Assert.AreEqual(0.5, animalDTO.CurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int, int>(), animalDTO.PossibleMates);
+            Assert.AreEqual('T', animalDTO.CreationKey);
+        }
+
+        [TestMethod]
+        public void AnimalToSaveDTO_WhenMated_ReturnsAnimalWithCorrectPossibleMatesAndOffsprings()
+        {
+            var value = MatingSetup();
+            var animal = value.animal;
+
+            var animalDTObefore = animal.AnimalToSaveDTO();
+            animal.Turn(value.world, new AnimalCoordinates(0, 0, animal));
+            var animalDTOafter = animal.AnimalToSaveDTO();
+
+            Assert.IsNotNull(animalDTObefore);
+            Assert.AreEqual(animal.ID, animalDTObefore.Id);
+            Assert.AreEqual(50, animalDTObefore.Health);
+            Assert.AreEqual(75, animalDTObefore.Stamina);
+            Assert.AreEqual(5, animalDTObefore.Vision);
+            Assert.AreEqual(3, animalDTObefore.Speed);
+            Assert.AreEqual(8, animalDTObefore.Endurance);
+            Assert.AreEqual(2, animalDTObefore.Defence);
+            Assert.AreEqual(true, animalDTObefore.IsAlive);
+            Assert.AreEqual(0, animalDTObefore.RoundsDead);
+            Assert.AreEqual(0, animalDTObefore.Offsprings);
+            Assert.AreEqual(2, animalDTObefore.Age);
+            Assert.AreEqual(1.5, animalDTObefore.CurrentChildrenPause);
+            CollectionAssert.AreNotEquivalent(new Dictionary<int, int>(), animalDTObefore.PossibleMates);
+            Assert.AreEqual('T', animalDTObefore.CreationKey);
+
+            Assert.IsNotNull(animalDTOafter);
+            Assert.AreEqual(animal.ID, animalDTOafter.Id);
+            Assert.IsTrue(animalDTOafter.Health<50);
+            Assert.AreEqual(75, animalDTOafter.Stamina);
+            Assert.AreEqual(5, animalDTOafter.Vision);
+            Assert.AreEqual(3, animalDTOafter.Speed);
+            Assert.AreEqual(8, animalDTOafter.Endurance);
+            Assert.AreEqual(2, animalDTOafter.Defence);
+            Assert.AreEqual(true, animalDTOafter.IsAlive);
+            Assert.AreEqual(0, animalDTOafter.RoundsDead);
+            Assert.AreEqual(1, animalDTOafter.Offsprings);
+            Assert.IsTrue(animalDTOafter.Age>2);
+            Assert.AreEqual(0, animalDTOafter.CurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int, int>(), animalDTOafter.PossibleMates);
+            Assert.AreEqual('T', animalDTOafter.CreationKey);
+        }
+
+        [TestMethod]
+        public void SetUpAnimalFromSaveDTO_WhenNewAnimal_SetsUpAnimalWithAllSameInfo()
+        {
+            var animal = new TestAnimal();
+
+            var animalDTO = animal.AnimalToSaveDTO();
+            var recreatedAnimal = new TestAnimal();
+            recreatedAnimal.SetUpAnimalFromSaveDTO(animalDTO);
+
+            Assert.AreEqual(75, recreatedAnimal.Stamina);
+            Assert.AreEqual(50, recreatedAnimal.Health);
+            Assert.AreEqual(5, recreatedAnimal.Vision);
+            Assert.AreEqual(3, recreatedAnimal.Speed);
+            Assert.AreEqual(8, recreatedAnimal.Endurance);
+            Assert.AreEqual(2, recreatedAnimal.Defence);
+            Assert.AreEqual(true, recreatedAnimal.TestIsAlive);
+            Assert.AreEqual(0, recreatedAnimal.TestRoundsDead);
+            Assert.AreEqual(0, recreatedAnimal.TestAge);
+            Assert.AreEqual(0, recreatedAnimal.TestCurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int,int>(), recreatedAnimal.TestPossibleMates);
+            Assert.AreEqual(animal.ID, recreatedAnimal.ID);
+        }
+
+        [TestMethod]
+        public void SetUpAnimalFromSaveDTO_WhenAnimalDead_SetsUpAnimalWithAllSameInfo()
+        {
+            var animal = new TestAnimal();
+            animal.Damage(65);
+            animal.TestChangeStamina(-10);
+            animal.TestAge = 5.6;
+            animal.TestCurrentChildrenPause = 0.5;
+            animal.TestRoundsDead = 1;
+
+            var animalDTO = animal.AnimalToSaveDTO();
+            var recreatedAnimal = new TestAnimal();
+            recreatedAnimal.SetUpAnimalFromSaveDTO(animalDTO);
+
+            Assert.AreEqual(65, recreatedAnimal.Stamina);
+            Assert.AreEqual(-15, recreatedAnimal.Health);
+            Assert.AreEqual(5, recreatedAnimal.Vision);
+            Assert.AreEqual(3, recreatedAnimal.Speed);
+            Assert.AreEqual(8, recreatedAnimal.Endurance);
+            Assert.AreEqual(2, recreatedAnimal.Defence);
+            Assert.AreEqual(false, recreatedAnimal.TestIsAlive);
+            Assert.AreEqual(1, recreatedAnimal.TestRoundsDead);
+            Assert.AreEqual(5.6, recreatedAnimal.TestAge);
+            Assert.AreEqual(0.5, recreatedAnimal.TestCurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int,int>(), recreatedAnimal.TestPossibleMates);
+            Assert.AreEqual(animal.ID, recreatedAnimal.ID);
+        }
+
+        [TestMethod]
+        public void SetUpAnimalFromSaveDTO_WhenMated_SetsUpAnimalWithAllSameInfo()
+        {
+            var value = MatingSetup();
+            var animal = value.animal;
+
+            animal.Turn(value.world, new AnimalCoordinates(0, 0, animal));
+            var animalDTO = animal.AnimalToSaveDTO();
+            var recreatedAnimal = new TestAnimal();
+            recreatedAnimal.SetUpAnimalFromSaveDTO(animalDTO);
+
+            Assert.IsNotNull(recreatedAnimal);
+            Assert.AreEqual(animal.ID, recreatedAnimal.ID);
+            Assert.IsTrue(recreatedAnimal.Health<50);
+            Assert.AreEqual(75, recreatedAnimal.Stamina);
+            Assert.AreEqual(5, recreatedAnimal.Vision);
+            Assert.AreEqual(3, recreatedAnimal.Speed);
+            Assert.AreEqual(8, recreatedAnimal.Endurance);
+            Assert.AreEqual(2, recreatedAnimal.Defence);
+            Assert.AreEqual(true, recreatedAnimal.TestIsAlive);
+            Assert.AreEqual(0, recreatedAnimal.TestRoundsDead);
+            Assert.AreEqual(0, recreatedAnimal.TestCurrentChildrenPause);
+            CollectionAssert.AreEquivalent(new Dictionary<int,int>(), recreatedAnimal.TestPossibleMates);
+            Assert.AreEqual(animal.ID, recreatedAnimal.ID);
+            Assert.IsTrue(recreatedAnimal.TestAge>2);
+            Assert.AreEqual('T', recreatedAnimal.CreationKey);
         }
         #endregion
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -84,6 +85,144 @@ namespace Savanna.Logic
 
             }
             return (visibleAreaHeight, visibleAreaWidth);
+        }
+
+        /// <summary>
+        /// Gets field
+        /// </summary>
+        /// <returns>Field</returns>
+        public Animal?[,] GetField() => _field;
+
+        /// <summary>
+        /// Get info of available animals.
+        /// </summary>
+        /// <returns>List of animal info objects</returns>
+        private (string Name,char CreationKey)[] GetAvailableAnimalInfo()
+        {
+            var keys = AnimalFactory.GetAvailableKeys();
+            var values = new (string,char)[keys.Length];
+            for (int keyId = 0; keyId < keys.Length; keyId++)
+            {
+                var animal = AnimalFactory.CreateAnimal(keys[keyId]);
+                values[keyId] = (animal.Name, animal.CreationKey);
+            }
+            return values;
+        }
+
+        /// <summary>
+        /// Gets animalCardDTO by position on the board
+        /// </summary>
+        /// <param name="row">row of the animal</param>
+        /// <param name="column">column of the animal</param>
+        /// <returns>AnimalCardInfoDTO if animal was in that position or null if wasnt</returns>
+        public AnimalCardInfoDTO? GetAnimalCardDTOByPosition(int row, int column)
+        {
+            var animal = _field[row, column];
+            if (animal != null) return animal.AnimalToCardDTO();
+            return null;
+        }
+
+        /// <summary>
+        /// Gets animals position by id
+        /// </summary>
+        /// <param name="id"> ID of the animal to search for</param>
+        /// <returns> row and column pair or null if not found</returns>
+        public (int?,int?) GetAnimalPositionByID(int id)
+        {
+            for (int row = 0; row < Height; row++)
+            {
+                for (int column = 0; column < Width; column++)
+                {
+                    var animal = _field[row, column];
+                    if (animal != null && animal.ID == id) return (row, column);
+
+                }
+            }
+            return (null,null);
+        }
+
+        /// <summary>
+        /// Parses world to display DTO
+        /// </summary>
+        /// <returns>WorldDisplayDTO object</returns>
+        public WorldDisplayDTO WorldToDisplayDTO()
+        {
+            var animalRepresentations = new AnimalDisplayInfo?[Height][];
+            for (int i = 0; i < Height; i++)
+            {
+                animalRepresentations[i] = new AnimalDisplayInfo?[Width];
+                for (int j = 0; j < Width; j++)
+                {
+                    var animal = _field[i,j];
+                    if (animal != null) animalRepresentations[i][j] = new AnimalDisplayInfo { DisplayChar = animal.DisplayChar, DisplayEmoji = animal.DisplayEmoji, IsAlive = animal.IsAlive() };
+                }
+
+            }
+            var sharedWorld = new WorldDisplayDTO
+            {
+                AnimalsAvailable = _animalsAvailable,
+                AnimalField = animalRepresentations,
+                Iteration = _iteration,
+                AnimalsInWorld = _animalsInWorld,
+                Width = Width,
+                Height = Height,
+            };
+            return sharedWorld;
+        }
+
+        /// <summary>
+        /// Parses world to save DTO
+        /// </summary>
+        /// <returns>WorldSaveDTO object with all info</returns>
+        public WorldSaveDTO WorldToSaveDTO()
+        {
+            var animalRepresentations = new AnimalSaveDTO?[Height][];
+            for (int row = 0; row < Height; row++)
+            {
+                animalRepresentations[row] = new AnimalSaveDTO?[Width];
+                for (int column = 0; column < Width; column++)
+                {
+                    var animal = _field[row,column];
+                    if (animal != null) animalRepresentations[row][column] = animal.AnimalToSaveDTO();
+                }
+
+            }
+            return new WorldSaveDTO
+            {
+                Field = animalRepresentations,
+                Height = Height,
+                Width = Width,
+                AnimalsInWorld = _animalsInWorld,
+                Iteration = _iteration,
+            };
+        }
+
+        /// <summary>
+        /// Sets up the world from worldSaveDto
+        /// </summary>
+        /// <param name="worldSaveDTO">The info needed to set up the world like it was</param>
+        public void SetUpWorldFromSaveDTO(WorldSaveDTO worldSaveDTO)
+        {
+            var animalField = new Animal?[worldSaveDTO.Height,worldSaveDTO.Width];
+            for (int row = 0; row < worldSaveDTO.Height; row++)
+            {
+                for (int column = 0; column < worldSaveDTO.Width; column++)
+                {
+                    var animalDTO = worldSaveDTO.Field[row][column];
+                    if (animalDTO != null)
+                    {
+                        var animal = AnimalFactory.CreateAnimal(animalDTO.CreationKey);
+                        if (animal != null) animal.SetUpAnimalFromSaveDTO(animalDTO);
+                        animalField[row,column] = animal;
+                    }
+                }
+
+            }
+            _field = animalField;
+            Height = worldSaveDTO.Height;
+            Width = worldSaveDTO.Width;
+            _animalsInWorld = worldSaveDTO.AnimalsInWorld;
+            _iteration = worldSaveDTO.Iteration;
         }
     }
 }
